@@ -6,11 +6,14 @@ underkatalog, men får inte tyst åsidosätta projektprinciperna här.
 
 ## Projektets uppdrag och nuläge
 
-SKLTP Next är ett experimentellt open-sourceprojekt för att utforska nästa
-generations integrationsarkitektur för svensk vård och offentlig sektor.
-Ineras nya referens-/samverkansarkitektur är den centrala researchgrunden.
-Målarkitekturen är REST/OpenAPI-first, säker, observerbar, testbar och
-cloud-native utan att vara bunden till en viss produkt eller leverantör.
+SKLTP Next är ett experimentellt open-sourceprojekt för att utforska en ny
+referensarkitektur för integration inom svensk vård och offentlig sektor. Det
+är inte en modernisering eller nästa version av VP. Ineras T2-baserade
+referens- och samverkansarkitektur samt aktuella primärkällor från Inera är den
+huvudsakliga researchgrunden. SKLTP Next:s målarkitektur är REST/OpenAPI-first,
+säker, observerbar, testbar och cloud-native utan att vara bunden till en viss
+produkt eller leverantör. REST/OpenAPI-first är projektets designval och får
+inte tillskrivas T2 som ett generellt krav.
 
 Repot är vid detta dokuments införande ett startläge med endast `README.md` och
 Apache-2.0-licens. Det finns ännu ingen beslutad programmeringsstack,
@@ -23,13 +26,25 @@ med research, ett avgränsat experiment och vid behov en ADR.
 
 - Var research-first och evidence-driven. Gör inte större arkitekturval innan
   relevant officiellt material har undersökts.
-- Håll alltid isär **specificerat faktum**, **projektets tolkning** och
-  **SKLTP Next-förslag**. Tillskriv aldrig Inera krav som källan inte uttrycker.
+- Håll alltid isär **Specificerat**, **Tolkning** och **SKLTP Next-förslag**.
+  Tillskriv aldrig Inera krav som källan inte uttrycker. Bevara uttryckliga
+  hypoteser, motstridig evidens och kunskapsluckor som öppna frågor tills de har
+  verifierats; omvandla dem inte till designbeslut genom implementation.
 - Bygg den nya målarkitekturen som en modern arkitektur i egen rätt.
   SOAP/RIVTA och dagens SKLTP/VP är legacy: studera dem för historiska behov,
-  invariants och migreringsrisker, men bygg inte in SOAP i den nya kärnan.
+  invariants och migreringsrisker, men håll deras protokoll, kontraktsformat,
+  centrala routingmodell och begreppsmodell utanför den nya kärnan. Eventuella
+  migreringsadaptrar ska ligga vid kanten och motiveras separat.
 - Bevara problemförståelse från äldre integrationsplattformar, inte
   nödvändigtvis deras lösningar eller begreppsmodell.
+- Utgå inte från en central VP, gateway eller annan obligatorisk dataplane.
+  Undersök en federerad modell där gemensamma förmågor främst utgör control
+  plane för medlemskap, tjänste-/API-katalog, IAM-metadata,
+  interoperabilitetsspecifikationer samt trust och policy.
+- Behandla direkt kommunikation mellan REST/OpenAPI-konsument och
+  REST/OpenAPI-producent efter discovery och etablerad tillit som en central,
+  falsifierbar arkitekturhypotes. En gateway kan finnas lokalt eller för ett
+  avgränsat verksamhetsbehov, men är inte ett förutsatt centralt runtime-hopp.
 - Föredra standarder, öppna protokoll, open source och utbytbara komponenter.
   Minimera vendor lock-in och dokumentera när den inte kan undvikas.
 - Tillämpa security, privacy, observability, testability och operability by
@@ -50,8 +65,8 @@ med research, ett avgränsat experiment och vid behov en ADR.
 Använd aktuella primärkällor när fakta kan ha ändrats. Prioritera i denna
 ordning:
 
-1. Ineras publicerade arkitekturmaterial och annan dokumentation från ansvarig
-   organisation.
+1. Ineras aktuella T2- och samverkansarkitekturmaterial samt annan relevant
+   primärdokumentation från Inera.
 2. Normativa specifikationer och standarder, exempelvis RFC:er, OpenAPI
    Specification, OAuth/OIDC-specifikationer och relevanta FHIR-standarder.
 3. Officiell dokumentation för berörd open-sourceprodukt eller plattform,
@@ -65,17 +80,27 @@ ska agenten kontrollera aktuella källor i stället för att förlita sig på
 minneskunskap. Spara inte kopior av material vars licens är oklar; länka och
 sammanfatta med tydlig attribution.
 
+Använd `docs/research/001-inera-reference-architecture.md` som etablerad
+researchgrund för T2:s scope, mognad och öppna realiseringsfrågor. Kontrollera
+dess källor på nytt när aktualitet spelar roll. Dokumentets osäkerheter är
+fortsatt öppna frågor och får inte behandlas som accepterade projektbeslut.
+
 Research ska dokumenteras i små, fokuserade filer under `docs/research/` och
 minst innehålla:
 
 - titel, status (`research`) och datum för senaste sakgranskning,
 - avgränsad fråga och varför den är relevant,
-- fynd med tydlig uppdelning i `Specificerat`, `Tolkning` och `Förslag` där
-  alla tre förekommer,
+- fynd med tydlig uppdelning i `Specificerat`, `Tolkning` och
+  `SKLTP Next-förslag` där alla tre förekommer,
 - källista med dokumenttitel, utgivare, version/publiceringsdatum om känt,
   URL och datum då källan lästes,
 - osäkerheter, motsägelser och öppna frågor,
 - konsekvenser för projektet utan att göra dem till beslut av misstag.
+
+`Specificerat` ska återge vad källan uttryckligen anger och med vilken styrka.
+`Tolkning` ska vara projektets källgrundade läsning utan att tillskrivas Inera.
+`SKLTP Next-förslag` ska vara en fråga, hypotes eller åtgärd att undersöka, inte
+ett beslut.
 
 En källreferens ska ligga nära påståendet den stödjer. Om en källa inte är
 offentligt åtkomlig ska det framgå så att resultatet kan reproduceras eller
@@ -88,8 +113,9 @@ Tidiga researchspår bör omfatta:
   mognadsgrad,
 - identitet och tillit för maskin-till-maskin-flöden: OAuth 2.x, OIDC,
   serviceidentitet, tokenhantering, scopes/claims och eventuell mTLS,
-- tjänste-/API-kontrakt, katalog/federation, logisk adressering, discovery,
-  routing och ansvarsfördelning,
+- tjänste-/API-kontrakt, katalog/federation, logisk adressering och discovery
+  som `organisation + API -> endpoint`, samt när faktisk runtime-routing alls
+  behövs och vem som då ansvarar för den,
 - spårbarhet, audit, informationssäkerhet, dataskydd och observability,
 - versionshantering, kompatibilitet, felmodell och relevanta FHIR-kopplingar,
 - vilka äldre SKLTP/RIVTA-problem som fortfarande är giltiga respektive bara
@@ -127,15 +153,31 @@ kommandon repot faktiskt definierar och inte anta en viss stack.
 
 ## Arkitektur och ADR:er
 
-Den principiella målbild som ska undersökas och valideras är:
+Den första POC-hypotes som ska undersökas och valideras är:
 
-`REST/OpenAPI-konsument -> ingress -> identitet -> authorization/policy ->
-tjänsteupptäckt/logisk adressering/routing -> producent -> REST/OpenAPI`
+`REST/OpenAPI-konsument -> discovery (organisation + API -> endpoint) ->
+trust/federation -> OAuth M2M -> authorization hos producent ->
+REST/OpenAPI-producent`
 
-Detta är en orienterande kedja, inte ett beslut om antal processer, produkter
-eller nätverkshopp. Protokoll- och produktval får inte blandas ihop med
-domänbegrepp. Tydliggör trust boundaries, dataägarskap och ansvar innan
-komponenter ritas eller byggs.
+Efter discovery, etablerad tillit och tokeninhämtning är direkt API-anrop från
+konsument till producent huvudscenariot. Kedjan uttrycker logiska förmågor och
+verifieringssteg, inte beslut om antal processer, produkter, nätverkshopp eller
+ordningen på varje lokalt implementationsteg. Gemensamma funktioner för
+medlemskap, tjänste-/API-katalog, IAM-metadata,
+interoperabilitetsspecifikationer samt trust/policy ska i första hand prövas
+som control plane; gemensam metadata innebär inte en central dataplane.
+Service discovery och logisk adressering får inte automatiskt modelleras som
+central runtime-routing. En gateway får prövas lokalt eller för särskilda
+värdeadderande behov, men inte antas vara ett obligatoriskt centralt hopp.
+POC-kärnan ska inte innehålla SOAP, RIVTA, SKLTP eller VP.
+
+Detta är SKLTP Next:s hypotes, inte ett påstående om att T2 föreskriver REST
+eller en färdig realisering. Protokoll- och produktval får inte blandas ihop
+med domänbegrepp. Tydliggör trust boundaries, dataägarskap och ansvar innan
+komponenter ritas eller byggs. Håll katalog-API, dataformat, cache- och
+revokeringsregler, systemidentitet, tokenprofil, scopes/claims och
+federationsoperatör öppna tills ytterligare research eller experiment ger
+beslutsunderlag.
 
 Skriv en ADR i `docs/adr/` när ett val har långlivade konsekvenser, påverkar
 flera delar, begränsar framtida alternativ eller är dyrt att återkalla. Använd
@@ -191,7 +233,8 @@ observability-verifiering.
 Testa där relevant att systemet beter sig kontrollerat när:
 
 - identitet saknas, token är ogiltig eller authorization nekar,
-- producent eller katalogpost saknas och routing misslyckas,
+- producent eller katalogpost saknas och discovery eller direktanrop
+  misslyckas,
 - producenten är långsam, nere eller returnerar fel,
 - payloaden bryter kontraktet eller kontraktsversioner skiljer sig,
 - beroenden fallerar, timeouts nås eller retries uttöms.
@@ -224,9 +267,9 @@ finnas där syfte, skydd och livscykel är dokumenterade.
 POC:er ska tidigt visa hur fel kan förstås. Föredra öppna standarder, särskilt
 OpenTelemetry där det passar. Designa för trace ID, correlation ID,
 distributed tracing, strukturerad loggning, metrics, request- och
-dependency-duration, routingbeslut, authorization-resultat och stabila
-felkategorier. Telemetri ska kunna verifieras i test och får inte exponera
-känslig information.
+dependency-duration, discovery-/endpointbeslut, authorization-resultat och
+stabila felkategorier. Telemetri ska kunna verifieras i test och får inte
+exponera känslig information.
 
 Håll miljöerna `local`, `integration test`, `system test`, `demo`, `staging`
 och `production` begreppsligt åtskilda. Skillnader ska uttryckas genom
@@ -247,11 +290,14 @@ k3d, minikube, Helm, GitOps och CI-baserade ephemeral environments. Välj inte
 lokal Kubernetes enbart för att produktion kan använda Kubernetes.
 
 Målet för en första referensmiljö är att med få dokumenterade kommandon kunna
-starta och stoppa ett minimalt flöde med REST-konsument, nödvändiga SKLTP
-Next-komponenter, identity provider eller test-double, katalog/routing eller
-test-double, REST-producent samt tillräcklig tracing, metrics och loggning för
-att verifiera flödet. Miljön ska vara versionspinnad där reproducerbarhet
-kräver det och fungera både lokalt och i automatiska integrationstest.
+starta och stoppa POC-flödet `REST -> discovery -> trust/federation -> OAuth
+M2M -> authorization -> REST`. Miljön ska använda syntetiska organisationer,
+en tjänste-/API-katalog eller test-double, nödvändig IAM-/federationsmetadata,
+en identity provider eller test-double, en REST-konsument och en
+REST-producent samt tillräcklig tracing, metrics och loggning för att verifiera
+flödet. Den ska sakna SOAP och får inte kräva en central gateway eller VP.
+Miljön ska vara versionspinnad där reproducerbarhet kräver det och fungera både
+lokalt och i automatiska integrationstest.
 
 ## Dokumentstruktur och dokumentstatus
 
@@ -304,7 +350,7 @@ En researchuppgift är klar när:
 - frågan och avgränsningen är tydliga,
 - aktuella primärkällor har sökts och varje viktigt påstående kan spåras till
   källa, version och läsdatum,
-- specificerat faktum, tolkning och eget förslag hålls isär,
+- `Specificerat`, `Tolkning` och `SKLTP Next-förslag` hålls isär,
 - motstridig eller saknad evidens och kvarvarande osäkerhet redovisas,
 - konsekvenser och nästa verifierbara fråga är dokumenterade,
 - resultatet är sakgranskningsbart utan att läsaren måste återskapa agentens
