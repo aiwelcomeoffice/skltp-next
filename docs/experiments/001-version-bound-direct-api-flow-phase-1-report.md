@@ -1,3 +1,11 @@
+# Experiment 001 – resultat från Fas 1
+
+- **Status:** experimental
+- **Kördatum:** 2026-08-18
+- **Run-id:** `phase1-verification`
+- **Verifierad implementation:** [`f185078`](https://github.com/aiwelcomeoffice/skltp-next/commit/f185078b6fc2e2812c1f8147398f6c470f0791da)
+- **Omfattning:** endast Fas 1; hela Experiment 001 är inte klassificerat
+
 Fas 1 är implementerad och verifierad. Fas 2 har inte påbörjats.
 
 ### Implementerat
@@ -69,7 +77,13 @@ export RUN_ID=phase1-verification
 
 ### Evidens och säkerhet
 
-Det validerade paketet finns i [phase1-verification](../../experiments/001-version-bound-direct-api-flow/target/experiment-001/evidence/phase1-verification/manifest.json).
+Evidenspaketet från den dokumenterade körningen genererades lokalt under den
+Git-ignorerade `target/`-katalogen, med manifestet på
+`experiments/001-version-bound-direct-api-flow/target/experiment-001/evidence/phase1-verification/manifest.json`.
+Paketet är därför inte tillgängligt som en GitHub-länk. Det kan återskapas med
+de pinnade kommandona i [modulens README.md](../../experiments/001-version-bound-direct-api-flow/README.md).
+Rapporten dokumenterar den verifierade körningens resultat men checkar inte in
+privata eller genererade runtimeartefakter.
 
 - Manifeststatus: `pass`
 - Leakage scan: `pass`, 0 träffar över sex canaryklasser

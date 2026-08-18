@@ -944,9 +944,19 @@ Alla externa källor nedan lästes 2026-08-17. Lokala researchdokument
 
 ## Rekommenderat nästa enda implementationsteg
 
-Implementera endast **Fas 1 – minsta vertikala slice**: skapa den isolerade,
-pinnade Maven-modulen och realisera `REL-001/valid -> DIS-001/baseline ->
-FLOW-001/baseline -> CON-001/baseline` med ett direkt DPoP-skyddat
-loopback-HTTPS-anrop och minimalt validerat evidence package. Samma slice ska
-avgöra de tre verktygsgaterna. Inga övriga varianter, containrar, CI-filer
-eller produktionsmekanismer ska implementeras i det steget.
+Fas 1 är verifierad och får inte implementeras på nytt. Resultatet finns i
+[Fas 1-rapporten](001-version-bound-direct-api-flow-phase-1-report.md).
+
+Nästa framtida implementation är endast **Fas 2 – jämförbar kontroll och
+säkerhetsseparation**, som omfattar exakt:
+
+- `E001-FLOW-002`
+- `E001-SEC-001`
+- `E001-SEC-002`
+- `E001-AUTHZ-001`
+- `E001-TOK-001`
+
+Fas 2 får återanvända Fas 1-harnessen men får inte ändra de redan verifierade
+baseline-oraklen utan dokumenterad avvikelse. Inga Fas 3-scenarier,
+containrar, Kubernetes-, CI- eller produktionsmekanismer ingår. Denna
+dokumentationsuppgift påbörjar inte Fas 2.
