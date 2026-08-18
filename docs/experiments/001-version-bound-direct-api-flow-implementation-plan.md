@@ -2,7 +2,7 @@
 
 - **Status:** experimental
 - **Datum:** 2026-08-17
-- **Implementation:** inte påbörjad
+- **Implementation:** Fas 1 verifierad 2026-08-18; Fas 2–7 inte påbörjade
 - **Planerar:** [Experiment Specification 001](001-version-bound-direct-api-flow.md)
 - **Styrande syntes:** [Syntes 001](../architecture/001-research-synthesis-and-first-experiment-hypothesis.md)
 - **Beslutsräckvidd:** endast den syntetiska experimentharnessen
@@ -12,6 +12,43 @@ falsifiera Experiment 001. Det skapar ingen kod, inget OpenAPI-kontrakt, inga
 fixtures, scripts, containrar, CI-filer eller manifest. Valen är lokala,
 utbytbara experimentval. De är inte Inera-krav, nationella profiler,
 produktionsarkitektur eller ADR-beslut.
+
+## Implementationsresultat – Fas 1
+
+Fas 1 är implementerad i
+[den isolerade experimentmodulen](../../experiments/001-version-bound-direct-api-flow/README.md).
+En ren körning den 2026-08-18 gav följande schema-validerade resultat:
+
+| Variant | Resultat |
+|---|---|
+| `E001-REL-001/valid` | `pass` |
+| `E001-DIS-001/baseline` | `pass` |
+| `E001-FLOW-001/baseline` | `pass` |
+| `E001-CON-001/baseline` | `pass` |
+
+De tre blockerande verktygsgaterna fick följande faktiska utfall:
+
+| Gate | Utfall och evidens |
+|---|---|
+| Nimbus/DPoP | `pass`: explicit proof-`iat`, sju sekunders verifieringsfönster, stale-proof-nekande, replay-nekande, separata token-/resource-namespaces och ny single-use-checker efter reset verifierades utan `sleep`. |
+| Swagger Parser/Kappa | `pass`: Swagger Parser `2.1.45` accepterade exakt OAS `3.1.2` och nekade den strukturellt ogiltiga fixturen. Kappa `2.0.5` accepterade separata provider-/consumer-request och response samt nekade felaktig request och response med Jackson runtime `2.22.0`. |
+| Runtime | `pass`: Temurin `25.0.4+7-LTS` på Linux x86-64 kvarstod som verifierad baseline; ingen repinning gjordes ([JDK 25.0.4 release notes](https://www.oracle.com/java/technologies/javase/25-0-4-relnotes.html), [Temurin 25 releases](https://github.com/adoptium/temurin25-binaries/releases)). Maven `3.9.16`/Wrapper `3.3.4`, distributionschecksummer och pinnade pluginversioner användes ([Maven release history](https://maven.apache.org/docs/history.html)). |
+
+`mvn clean verify` körde åtta tester utan fel. Den genererade
+`payload-call-ledger.jsonl` visar för både FLOW-001 och CON-001 att
+authorization-servern tog emot tokenbegäran med `apiDataReceived: false` och
+att endast `producer-b` tog emot API-anropet med `apiDataReceived: true`.
+Manifest, filchecksummer och leakage scan validerades med noll träffar för de
+sex canaryklasserna. Det ignorerade körpaketet skapades under
+`experiments/001-version-bound-direct-api-flow/target/experiment-001/evidence/phase1-verification/`;
+det återskapas med kommandona i modulens README och versionshanteras inte.
+
+Resultatet gäller endast den minsta lokala, syntetiska Fas 1-slicen. Service-,
+membership- och IAM-familjerna är signerade lokala stores, medan AS och
+producent är två skilda loopback-HTTPS-listeners i samma JVM-process. Ingen
+process-/maskinisolering, senare variant, full core-svit, extern IdP,
+produktions-PKI eller produktionslämplighet är prövad. Hela Experiment 001 och
+dess hypotes är därför varken styrkta eller klassificerade av detta resultat.
 
 Den i uppgiftsbeskrivningen angivna filen
 `docs/synthesis/001-identity-addressing-contracts.md` finns inte på aktuell

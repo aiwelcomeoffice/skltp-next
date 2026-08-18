@@ -1,0 +1,139 @@
+{
+  "openapi": "3.1.2",
+  "info": {
+    "title": "Synthetic record availability API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/synthetic-records/{recordId}": {
+      "get": {
+        "operationId": "readSyntheticRecord",
+        "parameters": [
+          {
+            "name": "recordId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^synthetic-record-[0-9]{3}$"
+            }
+          },
+          {
+            "name": "Accept",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "const": "application/json"
+            }
+          }
+        ],
+        "security": [
+          {
+            "syntheticOAuth": [
+              "synthetic.read"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Synthetic record availability",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyntheticRecord"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "406": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "x-experiment-token-binding": "DPoP"
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "syntheticOAuth": {
+        "type": "oauth2",
+        "flows": {
+          "clientCredentials": {
+            "tokenUrl": "https://authorization-server.experiment-001.invalid/token",
+            "scopes": {
+              "synthetic.read": "Read a synthetic availability record"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "SyntheticRecord": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "recordId",
+          "status"
+        ],
+        "properties": {
+          "recordId": {
+            "type": "string",
+            "const": "synthetic-record-001"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "available"
+            ]
+          }
+        }
+      },
+      "Problem": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "title",
+          "status"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer",
+            "minimum": 400,
+            "maximum": 599
+          }
+        }
+      }
+    },
+    "responses": {
+      "Problem": {
+        "description": "RFC 9457 problem detail",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        }
+      }
+    }
+  }
+}
+

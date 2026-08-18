@@ -1,0 +1,8 @@
+{
+  "id": "E001-AUDIT",
+  "version": "1.0.0",
+  "status": "synthetic-test-only",
+  "separateFromTelemetry": true,
+  "retention": "not-defined-by-experiment"
+}
+

@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["family", "issuer", "context", "revision", "issuedAt", "validFrom", "expiresAt", "status", "members"],
+  "properties": {
+    "family": {"const": "membership"},
+    "issuer": {"type": "string"},
+    "context": {"type": "string"},
+    "revision": {"const": 1},
+    "issuedAt": {"type": "string", "format": "date-time"},
+    "validFrom": {"type": "string", "format": "date-time"},
+    "expiresAt": {"type": "string", "format": "date-time"},
+    "status": {"const": "active"},
+    "members": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["organizationId", "role", "status"],
+        "properties": {
+          "organizationId": {"type": "string"},
+          "role": {"enum": ["consumer", "producer"]},
+          "status": {"const": "active"}
+        }
+      }
+    }
+  }
+}
+

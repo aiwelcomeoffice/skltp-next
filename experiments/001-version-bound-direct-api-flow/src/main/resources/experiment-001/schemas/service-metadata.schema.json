@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["family", "issuer", "context", "revision", "issuedAt", "validFrom", "expiresAt", "status", "entries"],
+  "properties": {
+    "family": {"const": "service"},
+    "issuer": {"type": "string"},
+    "context": {"type": "string"},
+    "revision": {"const": 1},
+    "issuedAt": {"type": "string", "format": "date-time"},
+    "validFrom": {"type": "string", "format": "date-time"},
+    "expiresAt": {"type": "string", "format": "date-time"},
+    "status": {"const": "active"},
+    "entries": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["federationId", "testContextId", "producerOrganizationId", "apiProfileId", "contractVersion", "endpointId", "endpointRevision", "endpointUri"],
+        "properties": {
+          "federationId": {"type": "string"},
+          "testContextId": {"type": "string"},
+          "producerOrganizationId": {"type": "string"},
+          "apiProfileId": {"type": "string"},
+          "contractVersion": {"const": "1.0.0"},
+          "endpointId": {"const": "PRODUCER-ENDPOINT-REV-1"},
+          "endpointRevision": {"const": 1},
+          "endpointUri": {"type": "string", "format": "uri"}
+        }
+      }
+    }
+  }
+}
+

@@ -1,0 +1,9 @@
+{
+  "openapi": "3.1.2",
+  "info": {
+    "title": "Structurally invalid tool fixture",
+    "version": "1.0.0"
+  },
+  "paths": []
+}
+

@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:skltp-next:experiment-001:schema:release-index:1.0.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "releaseId",
+    "releaseVersion",
+    "status",
+    "references",
+    "dynamicSources"
+  ],
+  "properties": {
+    "releaseId": {"const": "E001-RELEASE"},
+    "releaseVersion": {"const": "1.0.0"},
+    "status": {"const": "immutable-test-fixture"},
+    "references": {
+      "type": "array",
+      "minItems": 13,
+      "maxItems": 13,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type", "id", "version", "owner", "path", "sha256"],
+        "properties": {
+          "type": {"type": "string"},
+          "id": {"type": "string"},
+          "version": {"const": "1.0.0"},
+          "owner": {"const": "synthetic-experiment-owner"},
+          "path": {"type": "string", "pattern": "^(profiles|contracts|scenarios)/"},
+          "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+        }
+      }
+    },
+    "dynamicSources": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "uniqueItems": true,
+      "items": {"enum": ["service", "membership", "iam"]}
+    }
+  }
+}
+

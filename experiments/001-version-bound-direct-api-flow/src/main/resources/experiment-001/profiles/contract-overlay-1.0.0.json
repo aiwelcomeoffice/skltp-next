@@ -1,0 +1,15 @@
+{
+  "id": "E001-CONTRACT-OVERLAY",
+  "version": "1.0.0",
+  "status": "experimental",
+  "rules": [
+    "OAS_VERSION_3_1_2",
+    "INFO_VERSION_RELEASE_BOUND",
+    "ONE_SIDE_EFFECT_FREE_READ_OPERATION",
+    "OPERATION_ID_REQUIRED",
+    "OAUTH_SCOPE_DECLARED",
+    "RFC9457_ERRORS",
+    "NO_RUNTIME_SERVERS"
+  ]
+}
+

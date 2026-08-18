@@ -1,0 +1,14 @@
+{
+  "id": "E001-OBSERVABILITY",
+  "version": "1.0.0",
+  "status": "experimental",
+  "traceContext": "W3C Trace Context Level 1 2021-11-23",
+  "sampling": "always-on",
+  "forbiddenData": [
+    "credential",
+    "proof",
+    "raw-claims",
+    "api-data"
+  ]
+}
+

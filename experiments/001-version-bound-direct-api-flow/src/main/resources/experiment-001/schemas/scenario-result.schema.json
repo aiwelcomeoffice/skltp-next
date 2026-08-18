@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:skltp-next:experiment-001:schema:scenario-result:1.0.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "runId",
+    "scenarioId",
+    "variantId",
+    "releaseId",
+    "releaseVersion",
+    "parameterSetId",
+    "expected",
+    "actual",
+    "status",
+    "checkpoints",
+    "telemetryRef",
+    "auditRef",
+    "contractValidation",
+    "leakageValidation"
+  ],
+  "properties": {
+    "schemaVersion": {"const": "1.0.0"},
+    "runId": {"type": "string", "pattern": "^[a-zA-Z0-9._-]{1,64}$"},
+    "scenarioId": {"enum": ["E001-REL-001", "E001-DIS-001", "E001-FLOW-001", "E001-CON-001"]},
+    "variantId": {"enum": ["valid", "baseline"]},
+    "releaseId": {"const": "E001-RELEASE"},
+    "releaseVersion": {"const": "1.0.0"},
+    "parameterSetId": {"const": "E001-PARAMS-1.0.0"},
+    "expected": {"const": "allow"},
+    "actual": {"enum": ["allow", "deny", "harness-error"]},
+    "status": {"enum": ["pass", "fail", "inconclusive"]},
+    "checkpoints": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+    "telemetryRef": {"type": "string"},
+    "auditRef": {"type": ["string", "null"]},
+    "contractValidation": {"enum": ["pass", "not-applicable"]},
+    "leakageValidation": {"const": "pending-collection"}
+  }
+}
+

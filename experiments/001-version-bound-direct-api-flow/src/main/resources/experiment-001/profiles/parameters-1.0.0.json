@@ -1,0 +1,13 @@
+{
+  "id": "E001-PARAMS-1.0.0",
+  "version": "1.0.0",
+  "tokenSeconds": 120,
+  "assertionSeconds": 30,
+  "dpopProofSeconds": 5,
+  "clockSkewSeconds": 2,
+  "dpopVerifierWindowSeconds": 7,
+  "serviceTtlSeconds": 30,
+  "membershipTtlSeconds": 15,
+  "iamTtlSeconds": 15
+}
+

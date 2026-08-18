@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["family", "issuer", "context", "revision", "issuedAt", "validFrom", "expiresAt", "status", "organizationId", "systemId", "clientId", "oauthIssuer", "tokenEndpoint", "audience", "scope", "clientAuthenticationMethod", "clientAuthenticationJwk", "authorizationServerSigningJwk", "dpopJwk"],
+  "properties": {
+    "family": {"const": "iam"},
+    "issuer": {"type": "string"},
+    "context": {"type": "string"},
+    "revision": {"const": 1},
+    "issuedAt": {"type": "string", "format": "date-time"},
+    "validFrom": {"type": "string", "format": "date-time"},
+    "expiresAt": {"type": "string", "format": "date-time"},
+    "status": {"const": "active"},
+    "organizationId": {"type": "string"},
+    "systemId": {"type": "string"},
+    "clientId": {"type": "string"},
+    "oauthIssuer": {"type": "string"},
+    "tokenEndpoint": {"type": "string", "format": "uri"},
+    "audience": {"type": "string"},
+    "scope": {"const": "synthetic.read"},
+    "clientAuthenticationMethod": {"const": "private_key_jwt"},
+    "clientAuthenticationJwk": {"type": "object"},
+    "authorizationServerSigningJwk": {"type": "object"},
+    "dpopJwk": {"type": "object"}
+  }
+}
+

@@ -1,0 +1,24 @@
+{
+  "id": "E001-IAM-M2M",
+  "version": "1.0.0",
+  "status": "experimental",
+  "grantType": "client_credentials",
+  "clientAuthenticationMethod": "private_key_jwt",
+  "accessTokenProfile": "RFC9068",
+  "senderConstraint": "DPoP",
+  "algorithms": {
+    "clientAssertion": [
+      "ES256"
+    ],
+    "accessToken": [
+      "ES256"
+    ],
+    "dpop": [
+      "ES256"
+    ]
+  },
+  "scope": "synthetic.read",
+  "ttlSeconds": 15,
+  "maxStalenessSeconds": 30
+}
+

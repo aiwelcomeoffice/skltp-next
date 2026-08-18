@@ -1,0 +1,7 @@
+{
+  "id": "E001-PURPOSE",
+  "version": "1.0.0",
+  "status": "synthetic-test-only",
+  "purpose": "Verify a non-clinical direct API read with synthetic data"
+}
+

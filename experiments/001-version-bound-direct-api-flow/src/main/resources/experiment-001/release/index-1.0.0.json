@@ -1,0 +1,116 @@
+{
+  "releaseId": "E001-RELEASE",
+  "releaseVersion": "1.0.0",
+  "status": "immutable-test-fixture",
+  "references": [
+    {
+      "type": "purpose",
+      "id": "E001-PURPOSE",
+      "version": "1.0.0",
+      "owner": "synthetic-experiment-owner",
+      "path": "profiles/purpose-1.0.0.json",
+      "sha256": "af0faec5c8ff4bfbda922c983635d0b037f9f2fba7dda8481030216cdf69a564"
+    },
+    {
+      "type": "responsibility",
+      "id": "E001-RESPONSIBILITY",
+      "version": "1.0.0",
+      "owner": "synthetic-experiment-owner",
+      "path": "profiles/responsibility-1.0.0.json",
+      "sha256": "6f944282e65e05eb0921ca2c553fb9b07b9d3e3e9e6ef74b377c13ddaf7e299e"
+    },
+    {
+      "type": "semantics",
+      "id": "E001-SEMANTICS",
+      "version": "1.0.0",
+      "owner": "synthetic-experiment-owner",
+      "path": "profiles/semantics-1.0.0.json",
+      "sha256": "9f9faa2a3b79db8463b5fdefdedf2a1d74123a5067db289ae3c3cdaa85893287"
+    },
+    {
+      "type": "contract",
+      "id": "E001-READ-API",
+      "version": "1.0.0",
+      "owner": "synthetic-experiment-owner",
+      "path": "contracts/read-api-1.0.0.openapi.json",
+      "sha256": "4b797d6aeed9960f72131f6de46cb72e113e389a1dddc347b270155745d34639"
+    },
+    {
+      "type": "contract-overlay",
+      "id": "E001-CONTRACT-OVERLAY",
+      "version": "1.0.0",
+      "owner": "synthetic-experiment-owner",
+      "path": "profiles/contract-overlay-1.0.0.json",
+      "sha256": "608df1f0b8aac9e371a768d71efddf9b00aff7840b336f1097eb44e442b82553"
+    },
+    {
+      "type": "discovery-profile",
+      "id": "E001-DISCOVERY",
+      "version": "1.0.0",
+      "owner": "synthetic-experiment-owner",
+      "path": "profiles/discovery-1.0.0.json",
+      "sha256": "1023bba1009d4bdbf57ba041847bfbe30222f62550f3e26daed28d14114beda9"
+    },
+    {
+      "type": "membership-profile",
+      "id": "E001-MEMBERSHIP",
+      "version": "1.0.0",
+      "owner": "synthetic-experiment-owner",
+      "path": "profiles/membership-1.0.0.json",
+      "sha256": "bd0c7f9340344b7162a743c04fe8d4948b7725c2f638f1617a2ebefa1f290b7f"
+    },
+    {
+      "type": "iam-profile",
+      "id": "E001-IAM-M2M",
+      "version": "1.0.0",
+      "owner": "synthetic-experiment-owner",
+      "path": "profiles/iam-1.0.0.json",
+      "sha256": "b6df7c2a8bc619382ee7adde6d53ff4164125442f229b3516959b2f35c588fac"
+    },
+    {
+      "type": "observability-profile",
+      "id": "E001-OBSERVABILITY",
+      "version": "1.0.0",
+      "owner": "synthetic-experiment-owner",
+      "path": "profiles/observability-1.0.0.json",
+      "sha256": "2e99fad0ae8807d8e7dcd12ed2d8e64c1e9ccdeee3c4b134b2138a052a550889"
+    },
+    {
+      "type": "audit-profile",
+      "id": "E001-AUDIT",
+      "version": "1.0.0",
+      "owner": "synthetic-experiment-owner",
+      "path": "profiles/audit-1.0.0.json",
+      "sha256": "ba84527fdafc747c1a7488b99e26de8e9003db6821625ac74852cc433196eadb"
+    },
+    {
+      "type": "producer-policy",
+      "id": "E001-PRODUCER-POLICY",
+      "version": "1.0.0",
+      "owner": "synthetic-experiment-owner",
+      "path": "profiles/producer-policy-1.0.0.json",
+      "sha256": "d72ebc2a51b98d46155e1de4d6d90ade6582c2af141144e9de924d05b6987608"
+    },
+    {
+      "type": "parameters",
+      "id": "E001-PARAMS-1.0.0",
+      "version": "1.0.0",
+      "owner": "synthetic-experiment-owner",
+      "path": "profiles/parameters-1.0.0.json",
+      "sha256": "805d52fc606af80b0b2a66252c2c40c96bfedca404fa41280d7d54959635041f"
+    },
+    {
+      "type": "scenario-catalog",
+      "id": "E001-PHASE-1-CATALOG",
+      "version": "1.0.0",
+      "owner": "synthetic-experiment-owner",
+      "path": "scenarios/catalog-phase-1-1.0.0.json",
+      "sha256": "5f2c03148ba0f4e54f6039b6564618530df1114ec8e5b31755a7f53c971e984c"
+    }
+  ],
+  "dynamicSources": [
+    "service",
+    "membership",
+    "iam"
+  ]
+}

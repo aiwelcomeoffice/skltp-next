@@ -1,0 +1,10 @@
+{
+  "id": "E001-PRODUCER-POLICY",
+  "version": "1.0.0",
+  "status": "experimental",
+  "method": "GET",
+  "resource": "synthetic-record",
+  "requiredScope": "synthetic.read",
+  "decision": "allow"
+}
+

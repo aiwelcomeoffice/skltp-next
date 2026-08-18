@@ -1,0 +1,15 @@
+{
+  "id": "E001-DISCOVERY",
+  "version": "1.0.0",
+  "status": "experimental",
+  "lookupKey": [
+    "federationId",
+    "testContextId",
+    "producerOrganizationId",
+    "apiProfileId",
+    "contractVersion"
+  ],
+  "ttlSeconds": 30,
+  "maxStalenessSeconds": 60
+}
+

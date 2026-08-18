@@ -1,0 +1,24 @@
+{
+  "id": "E001-PHASE-1-CATALOG",
+  "version": "1.0.0",
+  "status": "experimental",
+  "variants": [
+    {
+      "scenarioId": "E001-REL-001",
+      "variantId": "valid"
+    },
+    {
+      "scenarioId": "E001-DIS-001",
+      "variantId": "baseline"
+    },
+    {
+      "scenarioId": "E001-FLOW-001",
+      "variantId": "baseline"
+    },
+    {
+      "scenarioId": "E001-CON-001",
+      "variantId": "baseline"
+    }
+  ]
+}
+
