@@ -86,11 +86,19 @@ public final class ContractValidators {
     }
 
     public ValidationRecord validateProviderResponse(String body) {
-        return validateResponse("provider", body, true);
+        return validateResponse("provider", 200, "application/json", body, true);
     }
 
     public ValidationRecord validateConsumerResponse(String body) {
-        return validateResponse("consumer", body, true);
+        return validateResponse("consumer", 200, "application/json", body, true);
+    }
+
+    public ValidationRecord validateProviderError(int status, String body) {
+        return validateResponse("provider", status, "application/problem+json", body, true);
+    }
+
+    public ValidationRecord validateConsumerError(int status, String body) {
+        return validateResponse("consumer", status, "application/problem+json", body, true);
     }
 
     public boolean rejectsInvalidRequest(URI requestUri) {
@@ -98,7 +106,8 @@ public final class ContractValidators {
     }
 
     public boolean rejectsInvalidResponse() {
-        return "denied".equals(validateResponse("tool-gate", "{\"recordId\":\"wrong\",\"unexpected\":true}", false).result());
+        return "denied".equals(validateResponse("tool-gate", 200, "application/json",
+                "{\"recordId\":\"wrong\",\"unexpected\":true}", false).result());
     }
 
     private ValidationRecord validateRequest(String role, URI requestUri, boolean validFixture) {
@@ -120,13 +129,14 @@ public final class ContractValidators {
         }
     }
 
-    private ValidationRecord validateResponse(String role, String body, boolean validFixture) {
+    private ValidationRecord validateResponse(String role, int status, String contentType,
+                                                String body, boolean validFixture) {
         var request = new DefaultRequest.Builder(
                 "https://localhost/synthetic-records/synthetic-record-001", Request.Method.GET)
                 .header("Accept", "application/json")
                 .build();
-        var response = new DefaultResponse.Builder(200)
-                .header("Content-Type", "application/json")
+        var response = new DefaultResponse.Builder(status)
+                .header("Content-Type", contentType)
                 .body(Body.from(body))
                 .build();
         try {

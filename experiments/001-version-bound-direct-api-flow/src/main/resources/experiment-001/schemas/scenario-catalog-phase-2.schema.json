@@ -1,0 +1,335 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:skltp-next:experiment-001:schema:scenario-catalog-phase-2:1.0.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "id",
+    "version",
+    "status",
+    "phase",
+    "securityErrorOracle",
+    "variants"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0.0"
+    },
+    "id": {
+      "const": "E001-PHASE-2-CATALOG"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "status": {
+      "const": "experimental"
+    },
+    "phase": {
+      "const": "phase-2"
+    },
+    "securityErrorOracle": {
+      "const": "experiment-001/profiles/security-errors-phase-2-1.0.0.json"
+    },
+    "variants": {
+      "type": "array",
+      "minItems": 16,
+      "maxItems": 16,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/variant"
+      }
+    }
+  },
+  "$defs": {
+    "variant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scenarioId",
+        "variantId",
+        "expectedDecision",
+        "securityClass",
+        "terminalCheckpoint",
+        "businessOperationExecuted"
+      ],
+      "properties": {
+        "scenarioId": {
+          "enum": [
+            "E001-FLOW-002",
+            "E001-SEC-001",
+            "E001-SEC-002",
+            "E001-AUTHZ-001",
+            "E001-TOK-001"
+          ]
+        },
+        "variantId": {
+          "enum": [
+            "baseline",
+            "insufficient-scope",
+            "local-policy-deny",
+            "missing",
+            "wrong-issuer",
+            "wrong-audience",
+            "bad-signature",
+            "disallowed-algorithm",
+            "wrong-type",
+            "expired",
+            "not-yet-valid",
+            "missing-required-claim",
+            "wrong-client-id",
+            "wrong-sub"
+          ]
+        },
+        "expectedDecision": {
+          "enum": [
+            "allow",
+            "deny"
+          ]
+        },
+        "securityClass": {
+          "enum": [
+            "bearer",
+            "dpop"
+          ]
+        },
+        "terminalCheckpoint": {
+          "enum": [
+            "producer.token-validation",
+            "producer.sender-constraint",
+            "producer.authorization",
+            "business-operation"
+          ]
+        },
+        "businessOperationExecuted": {
+          "type": "boolean"
+        },
+        "securityErrorRef": {
+          "enum": [
+            "E001-SECERR-BEARER-MISSING",
+            "E001-SECERR-BEARER-INVALID-TOKEN",
+            "E001-SECERR-BEARER-INSUFFICIENT-SCOPE",
+            "E001-SECERR-LOCAL-POLICY-DENY",
+            "E001-SECERR-DPOP-SENDER-CONSTRAINT"
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "scenarioId": {
+                "enum": [
+                  "E001-FLOW-002",
+                  "E001-SEC-001",
+                  "E001-SEC-002"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "variantId": {
+                "const": "baseline"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "scenarioId": {
+                "const": "E001-AUTHZ-001"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "variantId": {
+                "enum": [
+                  "insufficient-scope",
+                  "local-policy-deny"
+                ]
+              },
+              "expectedDecision": {
+                "const": "deny"
+              },
+              "terminalCheckpoint": {
+                "const": "producer.authorization"
+              },
+              "businessOperationExecuted": {
+                "const": false
+              }
+            },
+            "required": [
+              "securityErrorRef"
+            ],
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "variantId": {
+                      "const": "insufficient-scope"
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "securityClass": {
+                      "const": "bearer"
+                    },
+                    "securityErrorRef": {
+                      "const": "E001-SECERR-BEARER-INSUFFICIENT-SCOPE"
+                    }
+                  }
+                },
+                "else": {
+                  "properties": {
+                    "securityClass": {
+                      "const": "dpop"
+                    },
+                    "securityErrorRef": {
+                      "const": "E001-SECERR-LOCAL-POLICY-DENY"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "scenarioId": {
+                "const": "E001-TOK-001"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "variantId": {
+                "enum": [
+                  "missing",
+                  "wrong-issuer",
+                  "wrong-audience",
+                  "bad-signature",
+                  "disallowed-algorithm",
+                  "wrong-type",
+                  "expired",
+                  "not-yet-valid",
+                  "missing-required-claim",
+                  "wrong-client-id",
+                  "wrong-sub"
+                ]
+              },
+              "expectedDecision": {
+                "const": "deny"
+              },
+              "securityClass": {
+                "const": "bearer"
+              },
+              "terminalCheckpoint": {
+                "const": "producer.token-validation"
+              },
+              "businessOperationExecuted": {
+                "const": false
+              }
+            },
+            "required": [
+              "securityErrorRef"
+            ],
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "variantId": {
+                      "const": "missing"
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "securityErrorRef": {
+                      "const": "E001-SECERR-BEARER-MISSING"
+                    }
+                  }
+                },
+                "else": {
+                  "properties": {
+                    "securityErrorRef": {
+                      "const": "E001-SECERR-BEARER-INVALID-TOKEN"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "scenarioId": {
+                "enum": [
+                  "E001-FLOW-002",
+                  "E001-SEC-001"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "expectedDecision": {
+                "const": "allow"
+              },
+              "securityClass": {
+                "const": "bearer"
+              },
+              "terminalCheckpoint": {
+                "const": "business-operation"
+              },
+              "businessOperationExecuted": {
+                "const": true
+              }
+            },
+            "not": {
+              "required": [
+                "securityErrorRef"
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "scenarioId": {
+                "const": "E001-SEC-002"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "expectedDecision": {
+                "const": "deny"
+              },
+              "securityClass": {
+                "const": "dpop"
+              },
+              "terminalCheckpoint": {
+                "const": "producer.sender-constraint"
+              },
+              "businessOperationExecuted": {
+                "const": false
+              },
+              "securityErrorRef": {
+                "const": "E001-SECERR-DPOP-SENDER-CONSTRAINT"
+              }
+            },
+            "required": [
+              "securityErrorRef"
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

@@ -57,7 +57,7 @@ public final class ExperimentCli {
             case "collect-evidence" -> collectEvidence(options);
             case "validate-evidence" -> validateEvidence(options);
             case "stop-environment" -> stopEnvironment(options);
-            default -> throw new IllegalArgumentException("Unknown Phase 1 command");
+            default -> throw new IllegalArgumentException("Unknown Experiment 001 command");
         };
     }
 
@@ -155,8 +155,8 @@ public final class ExperimentCli {
         String runId = required(options, "run-id");
         String scenario = required(options, "scenario");
         String variant = required(options, "variant");
-        if (!ExperimentConfig.PHASE_1_VARIANTS.contains(scenario + "/" + variant)) {
-            throw new IllegalArgumentException("Not a Phase 1 scenario/variant");
+        if (!ExperimentConfig.IMPLEMENTED_VARIANTS.contains(scenario + "/" + variant)) {
+            throw new IllegalArgumentException("Scenario/variant is not implemented through Phase 2");
         }
         new ScenarioEngine(ExperimentConfig.runtimeRoot(runId), runId)
                 .resetForScenario(scenario, variant);

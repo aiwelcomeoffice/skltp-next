@@ -7,8 +7,8 @@
   <groupId>se.skltpnext</groupId>
   <artifactId>experiment-001-version-bound-direct-api-flow</artifactId>
   <version>1.0.0-SNAPSHOT</version>
-  <name>SKLTP Next Experiment 001 - Phase 1</name>
-  <description>Isolated experimental harness for the Phase 1 vertical slice.</description>
+  <name>SKLTP Next Experiment 001 - Phases 1-2</name>
+  <description>Isolated experimental harness for the verified Phase 1 and Phase 2 slices.</description>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -175,14 +175,14 @@
             </manifest>
           </archive>
           <descriptors>
-            <descriptor>src/assembly/phase-1.xml</descriptor>
+            <descriptor>src/assembly/phase-1-2.xml</descriptor>
           </descriptors>
           <finalName>experiment-001-cli</finalName>
           <appendAssemblyId>false</appendAssemblyId>
         </configuration>
         <executions>
           <execution>
-            <id>phase-1-cli</id>
+            <id>phase-1-2-cli</id>
             <phase>package</phase>
             <goals><goal>single</goal></goals>
           </execution>

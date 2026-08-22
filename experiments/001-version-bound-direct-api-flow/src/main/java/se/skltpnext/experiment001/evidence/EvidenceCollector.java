@@ -29,11 +29,28 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public final class EvidenceCollector {
-    private static final List<String> EXPECTED_RESULTS = List.of(
+    private static final List<String> PHASE_1_RESULTS = List.of(
             "E001-REL-001--valid.json",
             "E001-DIS-001--baseline.json",
             "E001-FLOW-001--baseline.json",
             "E001-CON-001--baseline.json");
+    private static final List<String> PHASE_2_RESULTS = List.of(
+            "E001-FLOW-002--baseline.json",
+            "E001-SEC-001--baseline.json",
+            "E001-SEC-002--baseline.json",
+            "E001-AUTHZ-001--insufficient-scope.json",
+            "E001-AUTHZ-001--local-policy-deny.json",
+            "E001-TOK-001--missing.json",
+            "E001-TOK-001--wrong-issuer.json",
+            "E001-TOK-001--wrong-audience.json",
+            "E001-TOK-001--bad-signature.json",
+            "E001-TOK-001--disallowed-algorithm.json",
+            "E001-TOK-001--wrong-type.json",
+            "E001-TOK-001--expired.json",
+            "E001-TOK-001--not-yet-valid.json",
+            "E001-TOK-001--missing-required-claim.json",
+            "E001-TOK-001--wrong-client-id.json",
+            "E001-TOK-001--wrong-sub.json");
     private static final Set<String> FORBIDDEN_FIELD_NAMES = Set.of(
             "access_token", "client_assertion", "dpop_proof", "private_key",
             "raw_claims", "api_payload", "authorization_header");
@@ -49,11 +66,13 @@ public final class EvidenceCollector {
 
     public CollectionResult collect() {
         try {
+            boolean phaseTwo = phaseTwoResultsPresent();
+            List<String> expectedResults = expectedResults(phaseTwo);
             if (Files.exists(evidenceRoot)) {
                 deleteTree(evidenceRoot);
             }
             Files.createDirectories(evidenceRoot);
-            copyResults();
+            copyResults(expectedResults);
             copyOrCreate("events/telemetry/spans.jsonl", "telemetry/spans.jsonl");
             copyOrCreate("events/telemetry/decisions.jsonl", "telemetry/decisions.jsonl");
             copyOrCreate("events/telemetry/dependencies.jsonl", "telemetry/dependencies.jsonl");
@@ -61,6 +80,7 @@ public final class EvidenceCollector {
             copyOrCreate("events/contract/validations.jsonl", "contract/validations.jsonl");
             copyOrCreate("events/network/payload-call-ledger.jsonl", "network/payload-call-ledger.jsonl");
             copyOrCreate("events/errors/external.jsonl", "errors/external.jsonl");
+            copyOrCreate("events/errors/harness.jsonl", "errors/harness.jsonl");
             copyRequired("validation/tool-gates.json", "validation/tool-gates.json");
             Files.copy(runtimeRoot.resolve("public-trust/tls-fingerprints.json"),
                     evidenceRoot.resolve("tls-fingerprints.json"), StandardCopyOption.REPLACE_EXISTING);
@@ -74,9 +94,10 @@ public final class EvidenceCollector {
 
             LeakageResult leakage = scan(false);
             JsonSupport.writeJson(evidenceRoot.resolve("leakage/report.json"), leakage.toMap());
-            JsonSupport.writeJson(evidenceRoot.resolve("completeness.json"), completeness(leakage));
+            JsonSupport.writeJson(evidenceRoot.resolve("completeness.json"),
+                    completeness(leakage, phaseTwo, expectedResults));
 
-            boolean resultsPass = EXPECTED_RESULTS.stream().allMatch(name ->
+            boolean resultsPass = expectedResults.stream().allMatch(name ->
                     "pass".equals(read(evidenceRoot.resolve("results").resolve(name))
                             .required("status").textValue()));
             boolean gatesPass = "pass".equals(read(evidenceRoot.resolve("validation/tool-gates.json"))
@@ -93,21 +114,23 @@ public final class EvidenceCollector {
                             "sha256", JsonSupport.sha256(path)))
                     .toList();
             ObjectNode manifest = JsonSupport.MAPPER.createObjectNode();
-            manifest.put("schemaVersion", "1.0.0");
+            manifest.put("schemaVersion", phaseTwo ? "2.0.0" : "1.0.0");
             manifest.put("runId", runId);
-            manifest.put("phase", "phase-1");
+            manifest.put("phase", phaseTwo ? "phase-2" : "phase-1");
             manifest.put("status", status);
             manifest.put("sourceCommit", git("rev-parse", "HEAD").trim());
             manifest.put("gitStatusClass", git("status", "--porcelain").isBlank()
-                    ? "clean" : "phase-1-working-tree");
+                    ? "clean" : phaseTwo ? "phase-2-working-tree" : "phase-1-working-tree");
             ArrayNode files = manifest.putArray("files");
             fileEntries.forEach(entry -> {
                 ObjectNode file = files.addObject();
                 file.put("path", entry.get("path"));
                 file.put("sha256", entry.get("sha256"));
             });
-            JsonSupport.validate(JsonSupport.readResource(
-                    "experiment-001/schemas/evidence-manifest.schema.json"), manifest, "evidence manifest");
+            JsonSupport.validate(JsonSupport.readResource(phaseTwo
+                            ? "experiment-001/schemas/evidence-manifest-phase-2.schema.json"
+                            : "experiment-001/schemas/evidence-manifest.schema.json"),
+                    manifest, "evidence manifest");
             JsonSupport.writeJson(evidenceRoot.resolve("manifest.json"), manifest);
             writeChecksums();
             return new CollectionResult(status, leakage.passed(), directLedgerPass, evidenceRoot);
@@ -118,12 +141,17 @@ public final class EvidenceCollector {
 
     public ValidationResult validate() {
         JsonNode manifest = read(evidenceRoot.resolve("manifest.json"));
-        JsonSupport.validate(JsonSupport.readResource(
-                "experiment-001/schemas/evidence-manifest.schema.json"), manifest, "evidence manifest");
-        for (String name : EXPECTED_RESULTS) {
+        boolean phaseTwo = "phase-2".equals(manifest.path("phase").asText());
+        JsonSupport.validate(JsonSupport.readResource(phaseTwo
+                        ? "experiment-001/schemas/evidence-manifest-phase-2.schema.json"
+                        : "experiment-001/schemas/evidence-manifest.schema.json"),
+                manifest, "evidence manifest");
+        for (String name : expectedResults(phaseTwo)) {
             JsonNode result = read(evidenceRoot.resolve("results").resolve(name));
-            JsonSupport.validate(JsonSupport.readResource(
-                    "experiment-001/schemas/scenario-result.schema.json"), result, "scenario result " + name);
+            JsonSupport.validate(JsonSupport.readResource(PHASE_2_RESULTS.contains(name)
+                            ? "experiment-001/schemas/scenario-result-phase-2.schema.json"
+                            : "experiment-001/schemas/scenario-result.schema.json"),
+                    result, "scenario result " + name);
             if (!"pass".equals(result.required("status").textValue())) {
                 return new ValidationResult("inconclusive", false, false, false);
             }
@@ -140,11 +168,11 @@ public final class EvidenceCollector {
                 checksums, leakage.passed(), ledger);
     }
 
-    private void copyResults() throws IOException {
+    private void copyResults(List<String> expectedResults) throws IOException {
         Path source = runtimeRoot.resolve("results");
-        for (String name : EXPECTED_RESULTS) {
+        for (String name : expectedResults) {
             if (!Files.isRegularFile(source.resolve(name))) {
-                throw new IllegalStateException("Missing Phase 1 result " + name);
+                throw new IllegalStateException("Missing required scenario result " + name);
             }
             Path target = evidenceRoot.resolve("results").resolve(name);
             Files.createDirectories(target.getParent());
@@ -199,7 +227,11 @@ public final class EvidenceCollector {
         for (String schema : List.of(
                 "release-index.schema.json",
                 "scenario-result.schema.json",
+                "scenario-result-phase-2.schema.json",
                 "evidence-manifest.schema.json",
+                "evidence-manifest-phase-2.schema.json",
+                "scenario-catalog-phase-2.schema.json",
+                "security-errors-phase-2.schema.json",
                 "service-metadata.schema.json",
                 "membership-metadata.schema.json",
                 "iam-metadata.schema.json")) {
@@ -210,7 +242,11 @@ public final class EvidenceCollector {
                 "releaseIndexSha256", JsonSupport.sha256(JsonSupport.readResourceBytes(
                         "experiment-001/release/index-1.0.0.json")),
                 "releaseReferences", releaseIndex.required("references"),
-                "schemas", schemas);
+                "schemas", schemas,
+                "phaseTwoScenarioCatalogSha256", JsonSupport.sha256(JsonSupport.readResourceBytes(
+                        "experiment-001/scenarios/catalog-phase-2-1.0.0.json")),
+                "phaseTwoSecurityErrorsSha256", JsonSupport.sha256(JsonSupport.readResourceBytes(
+                        "experiment-001/profiles/security-errors-phase-2-1.0.0.json")));
     }
 
     private List<String> resolvedArtifacts() {
@@ -343,24 +379,59 @@ public final class EvidenceCollector {
                     return false;
                 }
             }
+            if (phaseTwoResultsPresent()) {
+                for (String key : ExperimentConfig.PHASE_2_VARIANTS) {
+                    String[] parts = key.split("/", 2);
+                    List<JsonNode> selected = nodes.stream()
+                            .filter(node -> parts[0].equals(node.path("scenarioId").asText())
+                                    && parts[1].equals(node.path("variantId").asText())
+                                    && "producer-b".equals(node.path("receiver").asText()))
+                            .toList();
+                    boolean expectedBusiness = Set.of(
+                            "E001-FLOW-002/baseline", "E001-SEC-001/baseline").contains(key);
+                    if (selected.size() != 1
+                            || selected.getFirst().required("apiDataReceived").booleanValue()
+                            != expectedBusiness) {
+                        return false;
+                    }
+                }
+            }
             return true;
         } catch (IOException e) {
             return false;
         }
     }
 
-    private Map<String, Object> completeness(LeakageResult leakage) {
+    private Map<String, Object> completeness(LeakageResult leakage, boolean phaseTwo,
+                                             List<String> expectedResults) {
+        List<String> expectedVariants = phaseTwo
+                ? java.util.stream.Stream.concat(
+                ExperimentConfig.PHASE_1_VARIANTS.stream(), ExperimentConfig.PHASE_2_VARIANTS.stream())
+                .sorted().toList()
+                : ExperimentConfig.PHASE_1_VARIANTS.stream().sorted().toList();
         return Map.of(
-                "phase", "phase-1",
-                "expectedVariants", List.of(
-                        "E001-REL-001/valid", "E001-DIS-001/baseline",
-                        "E001-FLOW-001/baseline", "E001-CON-001/baseline"),
-                "observedResultFiles", EXPECTED_RESULTS,
+                "phase", phaseTwo ? "phase-2" : "phase-1",
+                "expectedVariants", expectedVariants,
+                "observedResultFiles", expectedResults,
                 "toolGates", List.of("runtime", "nimbus-dpop", "swagger-parser", "kappa-jackson"),
                 "channels", List.of("telemetry", "audit", "contract", "dependency",
-                        "network", "external-errors", "results", "captured-console"),
+                        "network", "external-errors", "harness-errors", "results", "captured-console"),
                 "leakageCanaryClasses", leakage.canaryClasses(),
                 "complete", leakage.passed());
+    }
+
+    private boolean phaseTwoResultsPresent() {
+        Path results = runtimeRoot.resolve("results");
+        return PHASE_2_RESULTS.stream().anyMatch(name -> Files.isRegularFile(results.resolve(name)));
+    }
+
+    private static List<String> expectedResults(boolean phaseTwo) {
+        if (!phaseTwo) {
+            return PHASE_1_RESULTS;
+        }
+        List<String> combined = new ArrayList<>(PHASE_1_RESULTS);
+        combined.addAll(PHASE_2_RESULTS);
+        return List.copyOf(combined);
     }
 
     private void writeChecksums() throws IOException {

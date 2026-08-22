@@ -1,0 +1,79 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "E001-SECURITY-ERRORS-PHASE-2",
+  "version": "1.0.0",
+  "status": "experimental",
+  "phase": "phase-2",
+  "errorOracles": [
+    {
+      "id": "E001-SECERR-BEARER-MISSING",
+      "basis": "RFC6750",
+      "httpStatus": 401,
+      "challenge": {
+        "scheme": "Bearer",
+        "realm": "experiment-001",
+        "error": null,
+        "scope": null,
+        "algs": [],
+        "serialized": "Bearer realm=\"experiment-001\""
+      },
+      "oauthError": null,
+      "problemType": "urn:skltp-next:experiment-001:error:missing-token"
+    },
+    {
+      "id": "E001-SECERR-BEARER-INVALID-TOKEN",
+      "basis": "RFC6750",
+      "httpStatus": 401,
+      "challenge": {
+        "scheme": "Bearer",
+        "realm": "experiment-001",
+        "error": "invalid_token",
+        "scope": null,
+        "algs": [],
+        "serialized": "Bearer realm=\"experiment-001\", error=\"invalid_token\""
+      },
+      "oauthError": "invalid_token",
+      "problemType": "urn:skltp-next:experiment-001:error:invalid-token"
+    },
+    {
+      "id": "E001-SECERR-BEARER-INSUFFICIENT-SCOPE",
+      "basis": "RFC6750",
+      "httpStatus": 403,
+      "challenge": {
+        "scheme": "Bearer",
+        "realm": "experiment-001",
+        "error": "insufficient_scope",
+        "scope": "synthetic.read",
+        "algs": [],
+        "serialized": "Bearer realm=\"experiment-001\", error=\"insufficient_scope\", scope=\"synthetic.read\""
+      },
+      "oauthError": "insufficient_scope",
+      "problemType": "urn:skltp-next:experiment-001:error:insufficient-scope"
+    },
+    {
+      "id": "E001-SECERR-LOCAL-POLICY-DENY",
+      "basis": "local-experiment-policy",
+      "httpStatus": 403,
+      "challenge": null,
+      "oauthError": null,
+      "problemType": "urn:skltp-next:experiment-001:error:local-policy-deny"
+    },
+    {
+      "id": "E001-SECERR-DPOP-SENDER-CONSTRAINT",
+      "basis": "RFC9449",
+      "httpStatus": 401,
+      "challenge": {
+        "scheme": "DPoP",
+        "realm": null,
+        "error": "invalid_token",
+        "scope": null,
+        "algs": [
+          "ES256"
+        ],
+        "serialized": "DPoP error=\"invalid_token\", algs=\"ES256\""
+      },
+      "oauthError": "invalid_token",
+      "problemType": "urn:skltp-next:experiment-001:error:sender-constraint"
+    }
+  ]
+}

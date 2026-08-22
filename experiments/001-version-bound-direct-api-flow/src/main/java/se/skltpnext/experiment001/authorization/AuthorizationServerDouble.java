@@ -86,9 +86,13 @@ public final class AuthorizationServerDouble implements HttpHandler {
                 Map<String, List<String>> form = parseForm(new String(
                         exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8));
                 if (!List.of("client_credentials").equals(form.get("grant_type"))
-                        || !List.of(ExperimentConfig.SCOPE_READ).equals(form.get("scope"))) {
+                        || form.get("scope") == null
+                        || form.get("scope").size() != 1
+                        || !Set.of(ExperimentConfig.SCOPE_READ, ExperimentConfig.SCOPE_INSUFFICIENT)
+                        .contains(form.get("scope").getFirst())) {
                     throw new IllegalArgumentException("unsupported token request profile");
                 }
+                String requestedScope = form.get("scope").getFirst();
                 PrivateKeyJWT authentication = PrivateKeyJWT.parse(form);
                 new CanaryRegistry(runtimeRoot.resolve("private"))
                         .register("client_assertion", authentication.getClientAssertion().serialize());
@@ -100,27 +104,27 @@ public final class AuthorizationServerDouble implements HttpHandler {
                     throw new IllegalArgumentException("consumer membership inactive");
                 }
                 String dpopHeader = exchange.getRequestHeaders().getFirst("DPoP");
-                if (dpopHeader == null) {
-                    throw new IllegalArgumentException("missing DPoP proof");
+                JWKThumbprintConfirmation confirmation = null;
+                if (dpopHeader != null) {
+                    SignedJWT proof = SignedJWT.parse(dpopHeader);
+                    new CanaryRegistry(runtimeRoot.resolve("private"))
+                            .register("dpop_proof", proof.serialize());
+                    DPoPTokenRequestVerifier proofVerifier = NimbusDpopGate.tokenVerifier(tokenEndpoint, dpopChecker);
+                    confirmation = proofVerifier.verify(
+                            new DPoPIssuer(new ClientID(ExperimentConfig.CLIENT_ID)), proof);
+                    telemetry.decision("authorization-server.sender-constraint", "sender_constraint",
+                            "allow", "dpop-token-proof-valid");
                 }
-                SignedJWT proof = SignedJWT.parse(dpopHeader);
-                new CanaryRegistry(runtimeRoot.resolve("private"))
-                        .register("dpop_proof", proof.serialize());
-                DPoPTokenRequestVerifier proofVerifier = NimbusDpopGate.tokenVerifier(tokenEndpoint, dpopChecker);
-                JWKThumbprintConfirmation confirmation = proofVerifier.verify(
-                        new DPoPIssuer(new ClientID(ExperimentConfig.CLIENT_ID)), proof);
-                telemetry.decision("authorization-server.sender-constraint", "sender_constraint",
-                        "allow", "dpop-token-proof-valid");
 
-                String token = issueToken(confirmation);
+                String token = issueToken(confirmation, requestedScope);
                 new CanaryRegistry(runtimeRoot.resolve("private")).register("access_token", token);
                 ObjectNode response = JsonSupport.MAPPER.createObjectNode();
                 response.put("access_token", token);
-                response.put("token_type", "DPoP");
+                response.put("token_type", confirmation == null ? "Bearer" : "DPoP");
                 response.put("expires_in", ExperimentConfig.TOKEN_SECONDS);
-                response.put("scope", ExperimentConfig.SCOPE_READ);
+                response.put("scope", requestedScope);
                 telemetry.decision("authorization-server.token-issuance", "token_issuance",
-                        "allow", "rfc9068-dpop-bound");
+                        "allow", confirmation == null ? "rfc9068-bearer" : "rfc9068-dpop-bound");
                 send(exchange, 200, "application/json", JsonSupport.compact(response));
             } catch (Exception e) {
                 telemetry.decision("authorization-server.client-authentication",
@@ -162,7 +166,7 @@ public final class AuthorizationServerDouble implements HttpHandler {
             JWKThumbprintConfirmation confirmation = NimbusDpopGate
                     .tokenVerifier(tokenEndpoint, dpopChecker)
                     .verify(new DPoPIssuer(new ClientID(ExperimentConfig.CLIENT_ID)), proof);
-            return issueToken(confirmation);
+            return issueToken(confirmation, ExperimentConfig.SCOPE_READ);
         } catch (Exception e) {
             throw new IllegalStateException("Authorization security-library warm-up failed", e);
         } finally {
@@ -213,12 +217,11 @@ public final class AuthorizationServerDouble implements HttpHandler {
                 Set.of(new Audience(tokenEndpoint.toString())), JWTAudienceCheck.STRICT, replayChecker);
     }
 
-    private String issueToken(JWKThumbprintConfirmation confirmation) throws Exception {
+    private String issueToken(JWKThumbprintConfirmation confirmation, String scope) throws Exception {
         Instant now = Instant.now();
         String sensitiveMarker = new CanaryRegistry(runtimeRoot.resolve("private"))
                 .newValue("sensitive_claim");
-        Map.Entry<String, net.minidev.json.JSONObject> cnf = confirmation.toJWTClaim();
-        JWTClaimsSet claims = new JWTClaimsSet.Builder()
+        JWTClaimsSet.Builder claims = new JWTClaimsSet.Builder()
                 .issuer(tokenEndpoint.resolve("/").toString())
                 .subject(ExperimentConfig.CLIENT_ID)
                 .audience(ExperimentConfig.AUDIENCE)
@@ -227,13 +230,15 @@ public final class AuthorizationServerDouble implements HttpHandler {
                 .expirationTime(Date.from(now.plusSeconds(ExperimentConfig.TOKEN_SECONDS)))
                 .jwtID("E001-TOKEN-" + UUID.randomUUID())
                 .claim("client_id", ExperimentConfig.CLIENT_ID)
-                .claim("scope", ExperimentConfig.SCOPE_READ)
-                .claim(cnf.getKey(), cnf.getValue())
-                .claim("synthetic_sensitive_marker", sensitiveMarker)
-                .build();
+                .claim("scope", scope)
+                .claim("synthetic_sensitive_marker", sensitiveMarker);
+        if (confirmation != null) {
+            Map.Entry<String, net.minidev.json.JSONObject> cnf = confirmation.toJWTClaim();
+            claims.claim(cnf.getKey(), cnf.getValue());
+        }
         SignedJWT jwt = new SignedJWT(new JWSHeader.Builder(JWSAlgorithm.ES256)
                 .type(new JOSEObjectType("at+jwt"))
-                .keyID(material.authorizationServerSigningKey().getKeyID()).build(), claims);
+                .keyID(material.authorizationServerSigningKey().getKeyID()).build(), claims.build());
         jwt.sign(new ECDSASigner(material.authorizationServerSigningKey()));
         return jwt.serialize();
     }

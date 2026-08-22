@@ -1,0 +1,152 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "E001-PHASE-2-CATALOG",
+  "version": "1.0.0",
+  "status": "experimental",
+  "phase": "phase-2",
+  "securityErrorOracle": "experiment-001/profiles/security-errors-phase-2-1.0.0.json",
+  "variants": [
+    {
+      "scenarioId": "E001-FLOW-002",
+      "variantId": "baseline",
+      "expectedDecision": "allow",
+      "securityClass": "bearer",
+      "terminalCheckpoint": "business-operation",
+      "businessOperationExecuted": true
+    },
+    {
+      "scenarioId": "E001-SEC-001",
+      "variantId": "baseline",
+      "expectedDecision": "allow",
+      "securityClass": "bearer",
+      "terminalCheckpoint": "business-operation",
+      "businessOperationExecuted": true
+    },
+    {
+      "scenarioId": "E001-SEC-002",
+      "variantId": "baseline",
+      "expectedDecision": "deny",
+      "securityClass": "dpop",
+      "terminalCheckpoint": "producer.sender-constraint",
+      "businessOperationExecuted": false,
+      "securityErrorRef": "E001-SECERR-DPOP-SENDER-CONSTRAINT"
+    },
+    {
+      "scenarioId": "E001-AUTHZ-001",
+      "variantId": "insufficient-scope",
+      "expectedDecision": "deny",
+      "securityClass": "bearer",
+      "terminalCheckpoint": "producer.authorization",
+      "businessOperationExecuted": false,
+      "securityErrorRef": "E001-SECERR-BEARER-INSUFFICIENT-SCOPE"
+    },
+    {
+      "scenarioId": "E001-AUTHZ-001",
+      "variantId": "local-policy-deny",
+      "expectedDecision": "deny",
+      "securityClass": "dpop",
+      "terminalCheckpoint": "producer.authorization",
+      "businessOperationExecuted": false,
+      "securityErrorRef": "E001-SECERR-LOCAL-POLICY-DENY"
+    },
+    {
+      "scenarioId": "E001-TOK-001",
+      "variantId": "missing",
+      "expectedDecision": "deny",
+      "securityClass": "bearer",
+      "terminalCheckpoint": "producer.token-validation",
+      "businessOperationExecuted": false,
+      "securityErrorRef": "E001-SECERR-BEARER-MISSING"
+    },
+    {
+      "scenarioId": "E001-TOK-001",
+      "variantId": "wrong-issuer",
+      "expectedDecision": "deny",
+      "securityClass": "bearer",
+      "terminalCheckpoint": "producer.token-validation",
+      "businessOperationExecuted": false,
+      "securityErrorRef": "E001-SECERR-BEARER-INVALID-TOKEN"
+    },
+    {
+      "scenarioId": "E001-TOK-001",
+      "variantId": "wrong-audience",
+      "expectedDecision": "deny",
+      "securityClass": "bearer",
+      "terminalCheckpoint": "producer.token-validation",
+      "businessOperationExecuted": false,
+      "securityErrorRef": "E001-SECERR-BEARER-INVALID-TOKEN"
+    },
+    {
+      "scenarioId": "E001-TOK-001",
+      "variantId": "bad-signature",
+      "expectedDecision": "deny",
+      "securityClass": "bearer",
+      "terminalCheckpoint": "producer.token-validation",
+      "businessOperationExecuted": false,
+      "securityErrorRef": "E001-SECERR-BEARER-INVALID-TOKEN"
+    },
+    {
+      "scenarioId": "E001-TOK-001",
+      "variantId": "disallowed-algorithm",
+      "expectedDecision": "deny",
+      "securityClass": "bearer",
+      "terminalCheckpoint": "producer.token-validation",
+      "businessOperationExecuted": false,
+      "securityErrorRef": "E001-SECERR-BEARER-INVALID-TOKEN"
+    },
+    {
+      "scenarioId": "E001-TOK-001",
+      "variantId": "wrong-type",
+      "expectedDecision": "deny",
+      "securityClass": "bearer",
+      "terminalCheckpoint": "producer.token-validation",
+      "businessOperationExecuted": false,
+      "securityErrorRef": "E001-SECERR-BEARER-INVALID-TOKEN"
+    },
+    {
+      "scenarioId": "E001-TOK-001",
+      "variantId": "expired",
+      "expectedDecision": "deny",
+      "securityClass": "bearer",
+      "terminalCheckpoint": "producer.token-validation",
+      "businessOperationExecuted": false,
+      "securityErrorRef": "E001-SECERR-BEARER-INVALID-TOKEN"
+    },
+    {
+      "scenarioId": "E001-TOK-001",
+      "variantId": "not-yet-valid",
+      "expectedDecision": "deny",
+      "securityClass": "bearer",
+      "terminalCheckpoint": "producer.token-validation",
+      "businessOperationExecuted": false,
+      "securityErrorRef": "E001-SECERR-BEARER-INVALID-TOKEN"
+    },
+    {
+      "scenarioId": "E001-TOK-001",
+      "variantId": "missing-required-claim",
+      "expectedDecision": "deny",
+      "securityClass": "bearer",
+      "terminalCheckpoint": "producer.token-validation",
+      "businessOperationExecuted": false,
+      "securityErrorRef": "E001-SECERR-BEARER-INVALID-TOKEN"
+    },
+    {
+      "scenarioId": "E001-TOK-001",
+      "variantId": "wrong-client-id",
+      "expectedDecision": "deny",
+      "securityClass": "bearer",
+      "terminalCheckpoint": "producer.token-validation",
+      "businessOperationExecuted": false,
+      "securityErrorRef": "E001-SECERR-BEARER-INVALID-TOKEN"
+    },
+    {
+      "scenarioId": "E001-TOK-001",
+      "variantId": "wrong-sub",
+      "expectedDecision": "deny",
+      "securityClass": "bearer",
+      "terminalCheckpoint": "producer.token-validation",
+      "businessOperationExecuted": false,
+      "securityErrorRef": "E001-SECERR-BEARER-INVALID-TOKEN"
+    }
+  ]
+}

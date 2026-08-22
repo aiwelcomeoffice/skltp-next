@@ -2,6 +2,7 @@ package se.skltpnext.experiment001.consumer;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.jwk.ECKey;
 import com.nimbusds.oauth2.sdk.auth.JWTAuthenticationClaimsSet;
 import com.nimbusds.oauth2.sdk.auth.PrivateKeyJWT;
 import com.nimbusds.oauth2.sdk.dpop.DefaultDPoPProofFactory;
@@ -111,8 +112,109 @@ public final class Consumer {
         }
     }
 
+    public IssuedToken obtainToken(String scenarioId, String variantId,
+                                   MetadataStores.DiscoveryResult discovery,
+                                   TokenKind tokenKind, String scope) {
+        try (TelemetryRecorder telemetry = new TelemetryRecorder(
+                runtimeRoot, runId, scenarioId, variantId, "consumer")) {
+            long tokenStart = System.nanoTime();
+            IssuedToken token = requestAccessToken(
+                    scenarioId, variantId, discovery, tokenKind, scope);
+            telemetry.dependency("authorization-server", "success",
+                    Duration.ofNanos(System.nanoTime() - tokenStart).toMillis());
+            return token;
+        } catch (Exception e) {
+            throw new IllegalStateException("Token request failed at a protected checkpoint", e);
+        }
+    }
+
+    public ResourceResponse callResource(String scenarioId, String variantId,
+                                         MetadataStores.DiscoveryResult discovery,
+                                         String authorizationScheme, String accessToken,
+                                         ECKey proofKey, String actorContext) {
+        try (TelemetryRecorder telemetry = new TelemetryRecorder(
+                runtimeRoot, runId, scenarioId, variantId, "consumer")) {
+            URI resourceUri = ExperimentConfig.resourceUri(discovery.producerEndpoint());
+            var consumerRequest = contracts.validateConsumerRequest(resourceUri);
+            telemetry.contract(consumerRequest.role(), consumerRequest.phase(), consumerRequest.result());
+
+            HttpRequest.Builder requestBuilder = HttpRequest.newBuilder(resourceUri)
+                    .timeout(Duration.ofMillis(300))
+                    .GET()
+                    .header("Accept", "application/json")
+                    .header("X-Experiment-Scenario", scenarioId)
+                    .header("X-Experiment-Variant", variantId)
+                    .header("X-Experiment-Actor", actorContext);
+            if (accessToken != null) {
+                requestBuilder.header("Authorization", authorizationScheme + " " + accessToken);
+            }
+            if ("DPoP".equals(authorizationScheme) && accessToken != null && proofKey != null) {
+                DPoPAccessToken dpopAccessToken = new DPoPAccessToken(accessToken);
+                var resourceProof = new DefaultDPoPProofFactory(proofKey, JWSAlgorithm.ES256)
+                        .createDPoPJWT(new JWTID("E001-RESOURCE-PROOF-" + UUID.randomUUID()),
+                                "GET", resourceUri, Date.from(Instant.now()), dpopAccessToken);
+                new CanaryRegistry(runtimeRoot.resolve("private"))
+                        .register("dpop_proof", resourceProof.serialize());
+                requestBuilder.header("DPoP", resourceProof.serialize());
+            }
+
+            Span span = telemetry.startConsumerSpan(EXTERNAL_TRACEPARENT);
+            Map<String, String> traceHeaders = new LinkedHashMap<>();
+            try (var ignored = span.makeCurrent()) {
+                telemetry.inject(io.opentelemetry.context.Context.current(), traceHeaders);
+                traceHeaders.forEach(requestBuilder::header);
+                long producerStart = System.nanoTime();
+                HttpResponse<String> response = httpClient.send(
+                        requestBuilder.build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+                telemetry.dependency("producer", response.statusCode() < 400 ? "success" : "error",
+                        Duration.ofNanos(System.nanoTime() - producerStart).toMillis());
+
+                String contentType = response.headers().firstValue("Content-Type").orElse("");
+                String problemType = null;
+                boolean contractPassed;
+                if (response.statusCode() == 200) {
+                    if (!contentType.startsWith("application/json")) {
+                        throw new IllegalStateException("Producer returned the wrong success media type");
+                    }
+                    var validation = contracts.validateConsumerResponse(response.body());
+                    telemetry.contract(validation.role(), validation.phase(), validation.result());
+                    contractPassed = validation.passed();
+                } else {
+                    if (!contentType.startsWith("application/problem+json")) {
+                        throw new IllegalStateException("Producer returned the wrong error media type");
+                    }
+                    var validation = contracts.validateConsumerError(response.statusCode(), response.body());
+                    telemetry.contract(validation.role(), validation.phase(), validation.result());
+                    contractPassed = validation.passed();
+                    problemType = JsonSupport.MAPPER.readTree(response.body())
+                            .required("type").textValue();
+                }
+                telemetry.endAndExport(span, response.statusCode() < 400);
+                return new ResourceResponse(
+                        response.statusCode(),
+                        response.headers().firstValue("WWW-Authenticate").orElse(null),
+                        problemType,
+                        contractPassed,
+                        span.getSpanContext().getTraceId(),
+                        span.getSpanContext().getSpanId());
+            } catch (Exception e) {
+                telemetry.endAndExport(span, false);
+                throw e;
+            }
+        } catch (Exception e) {
+            throw new IllegalStateException("Direct resource call failed at a protected checkpoint", e);
+        }
+    }
+
     private String requestToken(String scenarioId, String variantId,
                                 MetadataStores.DiscoveryResult discovery) throws Exception {
+        return requestAccessToken(scenarioId, variantId, discovery,
+                TokenKind.DPOP, ExperimentConfig.SCOPE_READ).value();
+    }
+
+    private IssuedToken requestAccessToken(String scenarioId, String variantId,
+                                           MetadataStores.DiscoveryResult discovery,
+                                           TokenKind tokenKind, String scope) throws Exception {
         Instant now = Instant.now();
         JWTAuthenticationClaimsSet claims = new JWTAuthenticationClaimsSet(
                 new ClientID(ExperimentConfig.CLIENT_ID),
@@ -128,35 +230,34 @@ public final class Consumer {
         new CanaryRegistry(runtimeRoot.resolve("private"))
                 .register("client_assertion", authentication.getClientAssertion().serialize());
 
-        DefaultDPoPProofFactory dpopFactory = new DefaultDPoPProofFactory(
-                material.dpopKey(), JWSAlgorithm.ES256);
-        var tokenProof = dpopFactory.createDPoPJWT(
-                new JWTID("E001-TOKEN-PROOF-" + UUID.randomUUID()),
-                "POST", discovery.tokenEndpoint(), Date.from(now), null);
-        new CanaryRegistry(runtimeRoot.resolve("private"))
-                .register("dpop_proof", tokenProof.serialize());
-
         Map<String, List<String>> form = new LinkedHashMap<>(authentication.toParameters());
         form.put("grant_type", List.of("client_credentials"));
-        form.put("scope", List.of(ExperimentConfig.SCOPE_READ));
-        HttpRequest request = HttpRequest.newBuilder(discovery.tokenEndpoint())
+        form.put("scope", List.of(scope));
+        HttpRequest.Builder request = HttpRequest.newBuilder(discovery.tokenEndpoint())
                 .timeout(Duration.ofMillis(300))
                 .header("Content-Type", "application/x-www-form-urlencoded")
-                .header("DPoP", tokenProof.serialize())
                 .header("X-Experiment-Scenario", scenarioId)
                 .header("X-Experiment-Variant", variantId)
-                .POST(HttpRequest.BodyPublishers.ofString(formEncode(form)))
-                .build();
+                .POST(HttpRequest.BodyPublishers.ofString(formEncode(form)));
+        if (tokenKind == TokenKind.DPOP) {
+            var tokenProof = new DefaultDPoPProofFactory(material.dpopKey(), JWSAlgorithm.ES256)
+                    .createDPoPJWT(new JWTID("E001-TOKEN-PROOF-" + UUID.randomUUID()),
+                            "POST", discovery.tokenEndpoint(), Date.from(now), null);
+            new CanaryRegistry(runtimeRoot.resolve("private"))
+                    .register("dpop_proof", tokenProof.serialize());
+            request.header("DPoP", tokenProof.serialize());
+        }
         HttpResponse<String> response = httpClient.send(
-                request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+                request.build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
         if (response.statusCode() != 200) {
-            throw new IllegalStateException("Authorization server denied baseline token request");
+            throw new IllegalStateException("Authorization server denied profiled token request");
         }
         JsonNode json = JsonSupport.MAPPER.readTree(response.body());
-        if (!"DPoP".equals(json.required("token_type").textValue())) {
+        if (!tokenKind.tokenType.equals(json.required("token_type").textValue())) {
             throw new IllegalStateException("Authorization server returned wrong token type");
         }
-        return json.required("access_token").textValue();
+        return new IssuedToken(json.required("access_token").textValue(), tokenKind,
+                Instant.now(), json.required("expires_in").intValue(), scope);
     }
 
     private static String formEncode(Map<String, List<String>> form) {
@@ -176,5 +277,36 @@ public final class Consumer {
             String consumerTraceId,
             String consumerSpanId) {
     }
-}
 
+    public enum TokenKind {
+        BEARER("Bearer"),
+        DPOP("DPoP");
+
+        private final String tokenType;
+
+        TokenKind(String tokenType) {
+            this.tokenType = tokenType;
+        }
+
+        public String tokenType() {
+            return tokenType;
+        }
+    }
+
+    public record IssuedToken(
+            String value,
+            TokenKind kind,
+            Instant obtainedAt,
+            int expiresInSeconds,
+            String requestedScope) {
+    }
+
+    public record ResourceResponse(
+            int status,
+            String wwwAuthenticate,
+            String problemType,
+            boolean contractValidated,
+            String consumerTraceId,
+            String consumerSpanId) {
+    }
+}

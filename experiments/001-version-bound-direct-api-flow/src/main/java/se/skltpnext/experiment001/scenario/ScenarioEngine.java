@@ -44,8 +44,8 @@ public final class ScenarioEngine {
 
     public ScenarioResult run(String scenarioId, String variantId) {
         String key = scenarioId + "/" + variantId;
-        if (!ExperimentConfig.PHASE_1_VARIANTS.contains(key)) {
-            throw new IllegalArgumentException("Scenario/variant is not implemented in Phase 1: " + key);
+        if (!ExperimentConfig.IMPLEMENTED_VARIANTS.contains(key)) {
+            throw new IllegalArgumentException("Scenario/variant is not implemented through Phase 2: " + key);
         }
         resetForScenario(scenarioId, variantId);
         try {
@@ -54,15 +54,19 @@ public final class ScenarioEngine {
                 case "E001-DIS-001/baseline" -> discoveryScenario(scenarioId, variantId);
                 case "E001-FLOW-001/baseline" -> flowScenario(scenarioId, variantId, false);
                 case "E001-CON-001/baseline" -> flowScenario(scenarioId, variantId, true);
-                default -> throw new IllegalStateException("Unreachable Phase 1 key");
+                default -> new PhaseTwoScenarioRunner(runtimeRoot, runId)
+                        .run(scenarioId, variantId);
             };
             writeResult(result);
             return result;
         } catch (Exception e) {
+            recordSafeHarnessFailure(scenarioId, variantId, e);
+            PhaseTwoDetails phaseTwo = ExperimentConfig.PHASE_2_VARIANTS.contains(key)
+                    ? PhaseTwoScenarioRunner.inconclusiveDetailsFor(scenarioId, variantId) : null;
             ScenarioResult inconclusive = new ScenarioResult(
                     scenarioId, variantId, "harness-error", "inconclusive",
                     List.of("safe-evidence-finalization"), null,
-                    "not-applicable", "pending-collection");
+                    "not-applicable", "pending-collection", phaseTwo);
             writeResult(inconclusive);
             return inconclusive;
         }
@@ -86,7 +90,7 @@ public final class ScenarioEngine {
         }
         return new ScenarioResult(scenarioId, variantId, "allow", "pass",
                 List.of("release.schema", "release.reference-cardinality", "release.byte-digests"),
-                null, "not-applicable", "pending-collection");
+                null, "not-applicable", "pending-collection", null);
     }
 
     private ScenarioResult discoveryScenario(String scenarioId, String variantId) {
@@ -109,7 +113,7 @@ public final class ScenarioEngine {
         return new ScenarioResult(scenarioId, variantId, "allow", "pass",
                 List.of("service.revision-1", "membership.consumer-a", "membership.producer-b",
                         "iam.organization-system-client", "discovery.single-endpoint"),
-                null, "not-applicable", "pending-collection");
+                null, "not-applicable", "pending-collection", null);
     }
 
     private ScenarioResult flowScenario(String scenarioId, String variantId, boolean requireTraceOracle) {
@@ -155,7 +159,7 @@ public final class ScenarioEngine {
             checkpoints.add("audit.separate-reference");
         }
         return new ScenarioResult(scenarioId, variantId, "allow", "pass",
-                checkpoints, auditRef, "pass", "pending-collection");
+                checkpoints, auditRef, "pass", "pending-collection", null);
     }
 
     public void reset() {
@@ -165,8 +169,8 @@ public final class ScenarioEngine {
 
     public void resetForScenario(String scenarioId, String variantId) {
         String key = scenarioId + "/" + variantId;
-        if (!ExperimentConfig.PHASE_1_VARIANTS.contains(key)) {
-            throw new IllegalArgumentException("Scenario/variant is not implemented in Phase 1: " + key);
+        if (!ExperimentConfig.IMPLEMENTED_VARIANTS.contains(key)) {
+            throw new IllegalArgumentException("Scenario/variant is not implemented through Phase 2: " + key);
         }
         reset();
         for (String channel : List.of(
@@ -176,7 +180,8 @@ public final class ScenarioEngine {
                 "events/audit/records.jsonl",
                 "events/contract/validations.jsonl",
                 "events/network/payload-call-ledger.jsonl",
-                "events/errors/external.jsonl")) {
+                "events/errors/external.jsonl",
+                "events/errors/harness.jsonl")) {
             removeScenarioEvents(runtimeRoot.resolve(channel), scenarioId, variantId);
         }
         try {
@@ -307,20 +312,72 @@ public final class ScenarioEngine {
         }
     }
 
+    private void recordSafeHarnessFailure(String scenarioId, String variantId, Exception failure) {
+        List<String> classes = new ArrayList<>();
+        Throwable current = failure;
+        while (current != null && classes.size() < 8) {
+            classes.add(current.getClass().getName());
+            current = current.getCause();
+        }
+        JsonSupport.appendJsonLine(runtimeRoot.resolve("events/errors/harness.jsonl"), Map.of(
+                "runId", runId,
+                "scenarioId", scenarioId,
+                "variantId", variantId,
+                "failureLocation", safeFailureLocation(failure),
+                "failureClasses", classes));
+    }
+
+    private static String safeFailureLocation(Throwable failure) {
+        StackTraceElement[] trace = failure.getStackTrace();
+        if (trace.length == 0) {
+            return failure.getClass().getName() + "#unknown";
+        }
+        StackTraceElement location = trace[0];
+        return location.getClassName() + "#" + location.getMethodName() + ":" + location.getLineNumber();
+    }
+
     private void writeResult(ScenarioResult result) {
+        boolean phaseTwo = result.phaseTwoDetails() != null;
         ObjectNode json = JsonSupport.MAPPER.createObjectNode();
-        json.put("schemaVersion", "1.0.0");
+        json.put("schemaVersion", phaseTwo ? "2.0.0" : "1.0.0");
         json.put("runId", runId);
         json.put("scenarioId", result.scenarioId());
         json.put("variantId", result.variantId());
         json.put("releaseId", ExperimentConfig.RELEASE_ID);
         json.put("releaseVersion", ExperimentConfig.RELEASE_VERSION);
         json.put("parameterSetId", ExperimentConfig.PARAMETER_SET_ID);
-        json.put("expected", "allow");
+        json.put("expected", phaseTwo ? result.phaseTwoDetails().expectedDecision() : "allow");
         json.put("actual", result.actual());
         json.put("status", result.status());
         var checkpoints = json.putArray("checkpoints");
         result.checkpoints().forEach(checkpoints::add);
+        if (phaseTwo) {
+            PhaseTwoDetails details = result.phaseTwoDetails();
+            json.put("terminalCheckpoint", details.terminalCheckpoint());
+            if (details.httpStatus() == null) {
+                json.putNull("httpStatus");
+            } else {
+                json.put("httpStatus", details.httpStatus());
+            }
+            putNullable(json, "wwwAuthenticate", details.wwwAuthenticate());
+            putNullable(json, "problemType", details.problemType());
+            json.put("tokenClass", details.tokenClass());
+            json.put("tokenPresented", details.tokenPresented());
+            json.put("senderConstraint", details.senderConstraint());
+            if (details.businessOperationExecuted() == null) {
+                json.putNull("businessOperationExecuted");
+            } else {
+                json.put("businessOperationExecuted", details.businessOperationExecuted());
+            }
+            json.put("actorContext", details.actorContext());
+            if (details.tokenAgeSeconds() == null) {
+                json.putNull("tokenAgeSeconds");
+            } else {
+                json.put("tokenAgeSeconds", details.tokenAgeSeconds());
+            }
+            var observations = json.putArray("observations");
+            details.observations().forEach(observations::add);
+        }
         json.put("telemetryRef", "telemetry/decisions.jsonl");
         if (result.auditRef() == null) {
             json.putNull("auditRef");
@@ -329,10 +386,20 @@ public final class ScenarioEngine {
         }
         json.put("contractValidation", result.contractValidation());
         json.put("leakageValidation", result.leakageValidation());
-        JsonSupport.validate(JsonSupport.readResource(
-                "experiment-001/schemas/scenario-result.schema.json"), json, "scenario result");
+        JsonSupport.validate(JsonSupport.readResource(phaseTwo
+                        ? "experiment-001/schemas/scenario-result-phase-2.schema.json"
+                        : "experiment-001/schemas/scenario-result.schema.json"),
+                json, "scenario result");
         JsonSupport.writeJson(runtimeRoot.resolve("results")
                 .resolve(result.scenarioId() + "--" + result.variantId() + ".json"), json);
+    }
+
+    private static void putNullable(ObjectNode node, String field, String value) {
+        if (value == null) {
+            node.putNull(field);
+        } else {
+            node.put(field, value);
+        }
     }
 
     public record ScenarioResult(
@@ -343,9 +410,25 @@ public final class ScenarioEngine {
             List<String> checkpoints,
             String auditRef,
             String contractValidation,
-            String leakageValidation) {
+            String leakageValidation,
+            PhaseTwoDetails phaseTwoDetails) {
         public boolean passed() {
             return "pass".equals(status);
         }
+    }
+
+    public record PhaseTwoDetails(
+            String expectedDecision,
+            String terminalCheckpoint,
+            Integer httpStatus,
+            String wwwAuthenticate,
+            String problemType,
+            String tokenClass,
+            boolean tokenPresented,
+            String senderConstraint,
+            Boolean businessOperationExecuted,
+            String actorContext,
+            Long tokenAgeSeconds,
+            List<String> observations) {
     }
 }

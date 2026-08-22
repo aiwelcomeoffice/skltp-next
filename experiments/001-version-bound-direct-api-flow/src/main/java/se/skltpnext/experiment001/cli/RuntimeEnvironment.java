@@ -19,7 +19,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class RuntimeEnvironment {
     private final Path runtimeRoot;
@@ -31,8 +33,30 @@ public final class RuntimeEnvironment {
     }
 
     public void serve() {
+        RunningEnvironment running = start();
+        Thread shutdownHook = new Thread(running::close, "experiment-001-shutdown");
+        Runtime.getRuntime().addShutdownHook(shutdownHook);
+        try {
+            new CountDownLatch(1).await();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Experiment environment interrupted", e);
+        } finally {
+            running.close();
+            try {
+                Runtime.getRuntime().removeShutdownHook(shutdownHook);
+            } catch (IllegalStateException ignored) {
+                // JVM shutdown is already in progress and the hook owns cleanup.
+            }
+        }
+    }
+
+    /** Starts the same environment without blocking so integration tests can own its lifecycle. */
+    public RunningEnvironment start() {
         HttpsServer authorizationServer = null;
         HttpsServer producerServer = null;
+        ExecutorService authorizationExecutor = null;
+        ExecutorService producerExecutor = null;
         try {
             CryptoMaterial material = CryptoMaterial.load(runtimeRoot);
             authorizationServer = HttpsServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
@@ -59,8 +83,10 @@ public final class RuntimeEnvironment {
                     TlsMaterial.serverContext(runtimeRoot, "as")));
             producerServer.setHttpsConfigurator(new HttpsConfigurator(
                     TlsMaterial.serverContext(runtimeRoot, "producer")));
-            authorizationServer.setExecutor(Executors.newFixedThreadPool(2));
-            producerServer.setExecutor(Executors.newFixedThreadPool(2));
+            authorizationExecutor = Executors.newFixedThreadPool(2);
+            producerExecutor = Executors.newFixedThreadPool(2);
+            authorizationServer.setExecutor(authorizationExecutor);
+            producerServer.setExecutor(producerExecutor);
             authorizationServer.createContext("/token", authorization);
             producerServer.createContext("/synthetic-records", producer);
             authorizationServer.createContext("/ready", exchange -> ready(exchange, "authorization-server"));
@@ -73,6 +99,15 @@ public final class RuntimeEnvironment {
                 producer.reset();
                 ready(exchange, "producer-reset");
             });
+            producerServer.createContext("/__policy/deny", exchange -> {
+                if (!"POST".equals(exchange.getRequestMethod())) {
+                    exchange.sendResponseHeaders(405, -1);
+                    exchange.close();
+                    return;
+                }
+                producer.setLocalPolicyDecision(ProducerDouble.LocalPolicyDecision.DENY);
+                ready(exchange, "producer-policy-deny");
+            });
             authorizationServer.start();
             producerServer.start();
 
@@ -84,20 +119,20 @@ public final class RuntimeEnvironment {
                     "producerEndpoint", producerEndpoint.toString(),
                     "authorizationListenerId", "AS-LISTENER",
                     "producerListenerId", "PRODUCER-ENDPOINT-REV-1"));
-
-            HttpsServer finalAuthorizationServer = authorizationServer;
-            HttpsServer finalProducerServer = producerServer;
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                finalAuthorizationServer.stop(0);
-                finalProducerServer.stop(0);
-            }, "experiment-001-shutdown"));
-            new CountDownLatch(1).await();
+            return new RunningEnvironment(authorizationServer, producerServer,
+                    authorizationExecutor, producerExecutor);
         } catch (Exception e) {
             if (authorizationServer != null) {
                 authorizationServer.stop(0);
             }
             if (producerServer != null) {
                 producerServer.stop(0);
+            }
+            if (authorizationExecutor != null) {
+                authorizationExecutor.shutdownNow();
+            }
+            if (producerExecutor != null) {
+                producerExecutor.shutdownNow();
             }
             throw new IllegalStateException("Experiment environment failed", e);
         }
@@ -130,5 +165,33 @@ public final class RuntimeEnvironment {
     public record EnvironmentInfo(
             String runId, long pid, URI authorizationServerEndpoint,
             URI producerEndpoint, String status) {
+    }
+
+    public static final class RunningEnvironment implements AutoCloseable {
+        private final HttpsServer authorizationServer;
+        private final HttpsServer producerServer;
+        private final ExecutorService authorizationExecutor;
+        private final ExecutorService producerExecutor;
+        private final AtomicBoolean closed = new AtomicBoolean();
+
+        private RunningEnvironment(HttpsServer authorizationServer, HttpsServer producerServer,
+                                   ExecutorService authorizationExecutor,
+                                   ExecutorService producerExecutor) {
+            this.authorizationServer = authorizationServer;
+            this.producerServer = producerServer;
+            this.authorizationExecutor = authorizationExecutor;
+            this.producerExecutor = producerExecutor;
+        }
+
+        @Override
+        public void close() {
+            if (!closed.compareAndSet(false, true)) {
+                return;
+            }
+            authorizationServer.stop(0);
+            producerServer.stop(0);
+            authorizationExecutor.shutdownNow();
+            producerExecutor.shutdownNow();
+        }
     }
 }

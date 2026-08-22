@@ -128,6 +128,11 @@ public final class TelemetryRecorder implements AutoCloseable {
     }
 
     public void decision(String checkpoint, String category, String result, String reason) {
+        decision(checkpoint, category, result, reason, ExperimentConfig.POLICY_VERSION);
+    }
+
+    public void decision(String checkpoint, String category, String result, String reason,
+                         String policyVersion) {
         Map<String, Object> event = new java.util.LinkedHashMap<>();
         event.put("runId", runId);
         event.put("scenarioId", scenarioId);
@@ -139,7 +144,7 @@ public final class TelemetryRecorder implements AutoCloseable {
         event.put("result", result);
         event.put("reason", reason);
         if ("authorization".equals(category)) {
-            event.put("policyVersion", ExperimentConfig.POLICY_VERSION);
+            event.put("policyVersion", policyVersion);
         }
         writeAllowlisted(runtimeRoot.resolve("events/telemetry/decisions.jsonl"), event, DECISION_FIELDS);
     }
@@ -183,6 +188,10 @@ public final class TelemetryRecorder implements AutoCloseable {
     }
 
     public String audit(String checkpoint, String result, String reason) {
+        return audit(checkpoint, result, reason, ExperimentConfig.POLICY_VERSION);
+    }
+
+    public String audit(String checkpoint, String result, String reason, String policyVersion) {
         String auditId = "AUDIT-" + UUID.randomUUID();
         Map<String, Object> record = new java.util.LinkedHashMap<>();
         record.put("auditRecordId", auditId);
@@ -194,12 +203,23 @@ public final class TelemetryRecorder implements AutoCloseable {
         record.put("systemRef", "SYSTEM_A");
         record.put("clientRef", "CLIENT_A");
         record.put("releaseVersion", ExperimentConfig.RELEASE_VERSION);
-        record.put("policyVersion", ExperimentConfig.POLICY_VERSION);
+        record.put("policyVersion", policyVersion);
         record.put("checkpoint", checkpoint);
         record.put("result", result);
         record.put("reason", reason);
         JsonSupport.appendJsonLine(runtimeRoot.resolve("events/audit/records.jsonl"), record);
         return auditId;
+    }
+
+    public void externalError(int status, String challengeClass, String problemType) {
+        JsonSupport.appendJsonLine(runtimeRoot.resolve("events/errors/external.jsonl"), Map.of(
+                "runId", runId,
+                "scenarioId", scenarioId,
+                "variantId", variantId,
+                "component", component,
+                "status", status,
+                "challengeClass", challengeClass,
+                "problemType", problemType));
     }
 
     private static void writeAllowlisted(Path target, Map<String, Object> value, Set<String> allowlist) {

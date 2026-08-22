@@ -1,0 +1,394 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:skltp-next:experiment-001:schema:security-errors-phase-2:1.0.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "id",
+    "version",
+    "status",
+    "phase",
+    "errorOracles"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0.0"
+    },
+    "id": {
+      "const": "E001-SECURITY-ERRORS-PHASE-2"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "status": {
+      "const": "experimental"
+    },
+    "phase": {
+      "const": "phase-2"
+    },
+    "errorOracles": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/errorOracle"
+      },
+      "allOf": [
+        {
+          "contains": {
+            "properties": {
+              "id": {
+                "const": "E001-SECERR-BEARER-MISSING"
+              }
+            },
+            "required": [
+              "id"
+            ]
+          },
+          "minContains": 1,
+          "maxContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "id": {
+                "const": "E001-SECERR-BEARER-INVALID-TOKEN"
+              }
+            },
+            "required": [
+              "id"
+            ]
+          },
+          "minContains": 1,
+          "maxContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "id": {
+                "const": "E001-SECERR-BEARER-INSUFFICIENT-SCOPE"
+              }
+            },
+            "required": [
+              "id"
+            ]
+          },
+          "minContains": 1,
+          "maxContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "id": {
+                "const": "E001-SECERR-LOCAL-POLICY-DENY"
+              }
+            },
+            "required": [
+              "id"
+            ]
+          },
+          "minContains": 1,
+          "maxContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "id": {
+                "const": "E001-SECERR-DPOP-SENDER-CONSTRAINT"
+              }
+            },
+            "required": [
+              "id"
+            ]
+          },
+          "minContains": 1,
+          "maxContains": 1
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "challenge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scheme",
+        "realm",
+        "error",
+        "scope",
+        "algs",
+        "serialized"
+      ],
+      "properties": {
+        "scheme": {
+          "enum": [
+            "Bearer",
+            "DPoP"
+          ]
+        },
+        "realm": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "error": {
+          "enum": [
+            "invalid_token",
+            "insufficient_scope",
+            null
+          ]
+        },
+        "scope": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "algs": {
+          "type": "array",
+          "maxItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "const": "ES256"
+          }
+        },
+        "serialized": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "errorOracle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "basis",
+        "httpStatus",
+        "challenge",
+        "oauthError",
+        "problemType"
+      ],
+      "properties": {
+        "id": {
+          "enum": [
+            "E001-SECERR-BEARER-MISSING",
+            "E001-SECERR-BEARER-INVALID-TOKEN",
+            "E001-SECERR-BEARER-INSUFFICIENT-SCOPE",
+            "E001-SECERR-LOCAL-POLICY-DENY",
+            "E001-SECERR-DPOP-SENDER-CONSTRAINT"
+          ]
+        },
+        "basis": {
+          "enum": [
+            "RFC6750",
+            "RFC9449",
+            "local-experiment-policy"
+          ]
+        },
+        "httpStatus": {
+          "enum": [
+            401,
+            403
+          ]
+        },
+        "challenge": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/challenge"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "oauthError": {
+          "enum": [
+            "invalid_token",
+            "insufficient_scope",
+            null
+          ]
+        },
+        "problemType": {
+          "type": "string",
+          "pattern": "^urn:skltp-next:experiment-001:error:[a-z0-9-]+$"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "id": {
+                "const": "E001-SECERR-BEARER-MISSING"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "basis": {
+                "const": "RFC6750"
+              },
+              "httpStatus": {
+                "const": 401
+              },
+              "challenge": {
+                "const": {
+                  "scheme": "Bearer",
+                  "realm": "experiment-001",
+                  "error": null,
+                  "scope": null,
+                  "algs": [],
+                  "serialized": "Bearer realm=\"experiment-001\""
+                }
+              },
+              "oauthError": {
+                "const": null
+              },
+              "problemType": {
+                "const": "urn:skltp-next:experiment-001:error:missing-token"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "id": {
+                "const": "E001-SECERR-BEARER-INVALID-TOKEN"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "basis": {
+                "const": "RFC6750"
+              },
+              "httpStatus": {
+                "const": 401
+              },
+              "challenge": {
+                "const": {
+                  "scheme": "Bearer",
+                  "realm": "experiment-001",
+                  "error": "invalid_token",
+                  "scope": null,
+                  "algs": [],
+                  "serialized": "Bearer realm=\"experiment-001\", error=\"invalid_token\""
+                }
+              },
+              "oauthError": {
+                "const": "invalid_token"
+              },
+              "problemType": {
+                "const": "urn:skltp-next:experiment-001:error:invalid-token"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "id": {
+                "const": "E001-SECERR-BEARER-INSUFFICIENT-SCOPE"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "basis": {
+                "const": "RFC6750"
+              },
+              "httpStatus": {
+                "const": 403
+              },
+              "challenge": {
+                "const": {
+                  "scheme": "Bearer",
+                  "realm": "experiment-001",
+                  "error": "insufficient_scope",
+                  "scope": "synthetic.read",
+                  "algs": [],
+                  "serialized": "Bearer realm=\"experiment-001\", error=\"insufficient_scope\", scope=\"synthetic.read\""
+                }
+              },
+              "oauthError": {
+                "const": "insufficient_scope"
+              },
+              "problemType": {
+                "const": "urn:skltp-next:experiment-001:error:insufficient-scope"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "id": {
+                "const": "E001-SECERR-LOCAL-POLICY-DENY"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "basis": {
+                "const": "local-experiment-policy"
+              },
+              "httpStatus": {
+                "const": 403
+              },
+              "challenge": {
+                "const": null
+              },
+              "oauthError": {
+                "const": null
+              },
+              "problemType": {
+                "const": "urn:skltp-next:experiment-001:error:local-policy-deny"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "id": {
+                "const": "E001-SECERR-DPOP-SENDER-CONSTRAINT"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "basis": {
+                "const": "RFC9449"
+              },
+              "httpStatus": {
+                "const": 401
+              },
+              "challenge": {
+                "const": {
+                  "scheme": "DPoP",
+                  "realm": null,
+                  "error": "invalid_token",
+                  "scope": null,
+                  "algs": [
+                    "ES256"
+                  ],
+                  "serialized": "DPoP error=\"invalid_token\", algs=\"ES256\""
+                }
+              },
+              "oauthError": {
+                "const": "invalid_token"
+              },
+              "problemType": {
+                "const": "urn:skltp-next:experiment-001:error:sender-constraint"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

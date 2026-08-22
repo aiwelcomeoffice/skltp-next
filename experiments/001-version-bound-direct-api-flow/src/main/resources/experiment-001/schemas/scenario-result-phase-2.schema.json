@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:skltp-next:experiment-001:schema:scenario-result-phase-2:1.0.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "runId",
+    "scenarioId",
+    "variantId",
+    "releaseId",
+    "releaseVersion",
+    "parameterSetId",
+    "expected",
+    "actual",
+    "status",
+    "checkpoints",
+    "terminalCheckpoint",
+    "httpStatus",
+    "wwwAuthenticate",
+    "problemType",
+    "tokenClass",
+    "tokenPresented",
+    "senderConstraint",
+    "businessOperationExecuted",
+    "actorContext",
+    "tokenAgeSeconds",
+    "observations",
+    "telemetryRef",
+    "auditRef",
+    "contractValidation",
+    "leakageValidation"
+  ],
+  "properties": {
+    "schemaVersion": {"const": "2.0.0"},
+    "runId": {"type": "string", "pattern": "^[a-zA-Z0-9._-]{1,64}$"},
+    "scenarioId": {
+      "enum": ["E001-FLOW-002", "E001-SEC-001", "E001-SEC-002", "E001-AUTHZ-001", "E001-TOK-001"]
+    },
+    "variantId": {
+      "enum": [
+        "baseline",
+        "insufficient-scope",
+        "local-policy-deny",
+        "missing",
+        "wrong-issuer",
+        "wrong-audience",
+        "bad-signature",
+        "disallowed-algorithm",
+        "wrong-type",
+        "expired",
+        "not-yet-valid",
+        "missing-required-claim",
+        "wrong-client-id",
+        "wrong-sub"
+      ]
+    },
+    "releaseId": {"const": "E001-RELEASE"},
+    "releaseVersion": {"const": "1.0.0"},
+    "parameterSetId": {"const": "E001-PARAMS-1.0.0"},
+    "expected": {"enum": ["allow", "deny"]},
+    "actual": {"enum": ["allow", "deny", "harness-error"]},
+    "status": {"enum": ["pass", "fail", "inconclusive"]},
+    "checkpoints": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string"}
+    },
+    "terminalCheckpoint": {"type": "string"},
+    "httpStatus": {"type": ["integer", "null"], "enum": [200, 401, 403, null]},
+    "wwwAuthenticate": {"type": ["string", "null"]},
+    "problemType": {"type": ["string", "null"], "format": "uri-reference"},
+    "tokenClass": {"enum": ["bearer", "dpop", "none"]},
+    "tokenPresented": {"type": "boolean"},
+    "senderConstraint": {"enum": ["not-applicable", "allow", "deny", "unknown"]},
+    "businessOperationExecuted": {"type": ["boolean", "null"]},
+    "actorContext": {"enum": ["consumer-a", "logical-attacker"]},
+    "tokenAgeSeconds": {"type": ["integer", "null"], "minimum": 0, "maximum": 120},
+    "observations": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^[a-z0-9.-]{1,96}$"}
+    },
+    "telemetryRef": {"const": "telemetry/decisions.jsonl"},
+    "auditRef": {"type": ["string", "null"]},
+    "contractValidation": {"enum": ["pass", "not-applicable"]},
+    "leakageValidation": {"const": "pending-collection"}
+  }
+}

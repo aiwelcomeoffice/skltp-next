@@ -1,8 +1,8 @@
 # Experiment 001 – Versionsbundet direkt M2M-API-flöde
 
 - **Status:** experimental
-- **Senast sakgranskad:** 2026-08-15
-- **Implementation:** inte påbörjad
+- **Senast sakgranskad:** 2026-08-22
+- **Implementation:** Fas 1 verifierad 2026-08-18 och Fas 2 verifierad 2026-08-22; senare faser inte påbörjade
 - **Dokumenttyp:** produkt- och implementationsneutral experimentspecifikation
 - **Styrande underlag:** [Syntes 001](../architecture/001-research-synthesis-and-first-experiment-hypothesis.md)
 
@@ -16,6 +16,11 @@ profil eller ett arkitekturbeslut för SKLTP Next.
 Experimentet är ett enda vertikalt experiment med flera deterministiska
 fixtures och scenarier. Det är inte en serie fristående produkt-, katalog-,
 OAuth-, DPoP- eller kontraktsexperiment.
+
+Implementationsstatusen ovan ändrar inte de normativa scenariodefinitionerna.
+Verifieringsresultaten finns i [Fas 1-rapporten](001-version-bound-direct-api-flow-phase-1-report.md)
+och [Fas 2-rapporten](001-version-bound-direct-api-flow-phase-2-report.md);
+hela Experiment 001 är ännu inte klassificerat.
 
 ## Läsregel för källstatus och kravord
 
@@ -788,9 +793,9 @@ Följande ska fortfarande hållas öppna efter denna specifikation:
 
 ### Rekommenderad nästa enda arbetsuppgift
 
-Skapa en avgränsad implementationsplan för Experiment 001 som mappar varje
-logisk artefakt och kommandoroll i denna specifikation till minsta framtida
-implementation, väljer och pinnar de lokala verktygs- och parametervärden som
-behövs samt visar spårbarhet från vart och ett av de 18 `core`-scenarierna till
-ett testorakel. Planen ska inte vara en ADR och ska inte utöka experimentets
-scope.
+Implementationsplanen finns nu i
+[Implementationsplan för Experiment 001](001-version-bound-direct-api-flow-implementation-plan.md),
+och dess Fas 1 och Fas 2 är verifierade. Nästa enda tillåtna
+implementationsuppgift är planens **Fas 3 – release-, discovery-, metadata-
+och lifecyclefel**. Den statusändringen utökar inte experimentets scope och
+påbörjar inte Fas 3 i denna arbetskopia.

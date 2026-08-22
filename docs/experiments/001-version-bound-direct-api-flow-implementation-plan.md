@@ -2,7 +2,8 @@
 
 - **Status:** experimental
 - **Datum:** 2026-08-17
-- **Implementation:** Fas 1 verifierad 2026-08-18; Fas 2–7 inte påbörjade
+- **Senast uppdaterad:** 2026-08-22
+- **Implementation:** Fas 1 verifierad 2026-08-18; Fas 2 verifierad 2026-08-22; Fas 3–7 inte påbörjade
 - **Planerar:** [Experiment Specification 001](001-version-bound-direct-api-flow.md)
 - **Styrande syntes:** [Syntes 001](../architecture/001-research-synthesis-and-first-experiment-hypothesis.md)
 - **Beslutsräckvidd:** endast den syntetiska experimentharnessen
@@ -55,6 +56,27 @@ Den i uppgiftsbeskrivningen angivna filen
 `main`. Commit `d10587f` lade i stället till den styrande syntesen på sökvägen
 som länkas ovan. Planen använder den faktiska filen och behåller
 sökvägsavvikelsen som en dokumentationsfråga; den skapar inte en dubblett.
+
+## Implementationsresultat – Fas 2
+
+Fas 2 är implementerad och verifierad i samma isolerade modul. Den fullständiga
+körningen och begränsningarna finns i
+[Fas 2-rapporten](001-version-bound-direct-api-flow-phase-2-report.md).
+
+- Exakt 16 nya kombinationer för `E001-FLOW-002`, `E001-SEC-001`,
+  `E001-SEC-002`, `E001-AUTHZ-001` och `E001-TOK-001` fick `pass`.
+- De fyra oförändrade Fas 1-kombinationerna fick fortsatt `pass`.
+- Tokenvalidering, sender constraint, authorization och affärsoperation
+  verifierades som separata, ordnade checkpoints med stopp före senare
+  kontroller och payload i deny-fallen.
+- `./mvnw -B -ntp clean verify` körde 30 tester utan fel, inklusive en
+  integrationstestkörning av samtliga 20 implementerade kombinationer.
+- Manifest, 37 filchecksummer, direktflödesledger och leakage scan validerades;
+  leakage scan hade noll träffar över sex canaryklasser.
+
+Fas 2-resultatet är begränsat till experimentharnessen. Bearer-fallet är en
+avsiktligt sårbar kontroll, och de additiva Fas 2-oraklen är varken en ny
+immutable interoperabilitetsrelease eller en permanent SKLTP Next-profil.
 
 ## Läsregel och kravnivå
 
@@ -654,7 +676,7 @@ API-payloadflöde och de tre verktygsgaterna är gröna. Annars stoppas
 implementationen för omplanering; säkerhets- eller kontraktskontrollen får
 inte handrullas för att få ett grönt resultat.
 
-### Fas 2 – jämförbar kontroll och säkerhetsseparation
+### Fas 2 – jämförbar kontroll och säkerhetsseparation (verifierad 2026-08-22)
 
 Implementera `E001-FLOW-002`, `E001-SEC-001`, `E001-SEC-002`,
 `E001-AUTHZ-001` och `E001-TOK-001`. Lägg till exakt de profilerade
@@ -944,19 +966,13 @@ Alla externa källor nedan lästes 2026-08-17. Lokala researchdokument
 
 ## Rekommenderat nästa enda implementationsteg
 
-Fas 1 är verifierad och får inte implementeras på nytt. Resultatet finns i
-[Fas 1-rapporten](001-version-bound-direct-api-flow-phase-1-report.md).
+Fas 1 och Fas 2 är verifierade och får inte implementeras på nytt. Resultaten
+finns i [Fas 1-rapporten](001-version-bound-direct-api-flow-phase-1-report.md)
+och [Fas 2-rapporten](001-version-bound-direct-api-flow-phase-2-report.md).
 
-Nästa framtida implementation är endast **Fas 2 – jämförbar kontroll och
-säkerhetsseparation**, som omfattar exakt:
-
-- `E001-FLOW-002`
-- `E001-SEC-001`
-- `E001-SEC-002`
-- `E001-AUTHZ-001`
-- `E001-TOK-001`
-
-Fas 2 får återanvända Fas 1-harnessen men får inte ändra de redan verifierade
-baseline-oraklen utan dokumenterad avvikelse. Inga Fas 3-scenarier,
-containrar, Kubernetes-, CI- eller produktionsmekanismer ingår. Denna
-dokumentationsuppgift påbörjar inte Fas 2.
+Nästa framtida implementation är endast **Fas 3 – release-, discovery-,
+metadata- och lifecyclefel** enligt fasindelningen ovan. Den får slutföra
+övriga redan specificerade varianter i `E001-REL-001` och implementera exakt
+`E001-DIS-002`, `E001-DIS-003`, `E001-META-001`, `E001-META-002` och
+`E001-LIFE-001`. Inga Fas 4-scenarier, containrar, Kubernetes-, CI- eller
+produktionsmekanismer ingår. Denna statusuppdatering påbörjar inte Fas 3.

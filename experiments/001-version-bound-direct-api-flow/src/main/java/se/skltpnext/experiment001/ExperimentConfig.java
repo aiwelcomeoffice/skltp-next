@@ -3,6 +3,7 @@ package se.skltpnext.experiment001;
 import java.net.URI;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.Set;
 
 public final class ExperimentConfig {
@@ -19,6 +20,7 @@ public final class ExperimentConfig {
     public static final String CLIENT_ID = "urn:skltp-next:experiment-001:client:consumer-a";
     public static final String API_PROFILE_ID = "urn:skltp-next:experiment-001:api:synthetic-read";
     public static final String SCOPE_READ = "synthetic.read";
+    public static final String SCOPE_INSUFFICIENT = "synthetic.insufficient";
     public static final String AUDIENCE = "urn:skltp-next:experiment-001:audience:producer-b";
     public static final String METADATA_ISSUER = "urn:skltp-next:experiment-001:metadata-authority";
     public static final String POLICY_ID = "E001-PRODUCER-POLICY";
@@ -32,6 +34,30 @@ public final class ExperimentConfig {
             "E001-DIS-001/baseline",
             "E001-FLOW-001/baseline",
             "E001-CON-001/baseline");
+    public static final Set<String> PHASE_2_VARIANTS = Set.of(
+            "E001-FLOW-002/baseline",
+            "E001-SEC-001/baseline",
+            "E001-SEC-002/baseline",
+            "E001-AUTHZ-001/insufficient-scope",
+            "E001-AUTHZ-001/local-policy-deny",
+            "E001-TOK-001/missing",
+            "E001-TOK-001/wrong-issuer",
+            "E001-TOK-001/wrong-audience",
+            "E001-TOK-001/bad-signature",
+            "E001-TOK-001/disallowed-algorithm",
+            "E001-TOK-001/wrong-type",
+            "E001-TOK-001/expired",
+            "E001-TOK-001/not-yet-valid",
+            "E001-TOK-001/missing-required-claim",
+            "E001-TOK-001/wrong-client-id",
+            "E001-TOK-001/wrong-sub");
+    public static final Set<String> IMPLEMENTED_VARIANTS;
+
+    static {
+        Set<String> variants = new HashSet<>(PHASE_1_VARIANTS);
+        variants.addAll(PHASE_2_VARIANTS);
+        IMPLEMENTED_VARIANTS = Set.copyOf(variants);
+    }
 
     private ExperimentConfig() {
     }
@@ -64,4 +90,3 @@ public final class ExperimentConfig {
         return producerEndpoint.resolve("/synthetic-records/synthetic-record-001");
     }
 }
-
