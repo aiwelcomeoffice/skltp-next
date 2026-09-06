@@ -24,9 +24,15 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public final class ScenarioEngine {
+    private static final Map<String, ReleaseValidator.FailureCategory> EXPECTED_RELEASE_FAILURE = Map.of(
+            "missing-ref", ReleaseValidator.FailureCategory.MISSING_REF,
+            "ambiguous-ref", ReleaseValidator.FailureCategory.AMBIGUOUS_REF,
+            "digest-mutation", ReleaseValidator.FailureCategory.DIGEST_MUTATION);
+
     private final Path runtimeRoot;
     private final String runId;
     private final RuntimeEnvironment.EnvironmentInfo environment;
@@ -45,7 +51,7 @@ public final class ScenarioEngine {
     public ScenarioResult run(String scenarioId, String variantId) {
         String key = scenarioId + "/" + variantId;
         if (!ExperimentConfig.IMPLEMENTED_VARIANTS.contains(key)) {
-            throw new IllegalArgumentException("Scenario/variant is not implemented through Phase 2: " + key);
+            throw new IllegalArgumentException("Scenario/variant is not implemented: " + key);
         }
         resetForScenario(scenarioId, variantId);
         try {
@@ -54,10 +60,16 @@ public final class ScenarioEngine {
                 case "E001-DIS-001/baseline" -> discoveryScenario(scenarioId, variantId);
                 case "E001-FLOW-001/baseline" -> flowScenario(scenarioId, variantId, false);
                 case "E001-CON-001/baseline" -> flowScenario(scenarioId, variantId, true);
+                case "E001-REL-001/missing-ref", "E001-REL-001/ambiguous-ref", "E001-REL-001/digest-mutation" ->
+                        releaseNegativeScenario(scenarioId, variantId);
                 default -> new PhaseTwoScenarioRunner(runtimeRoot, runId)
                         .run(scenarioId, variantId);
             };
-            writeResult(result);
+            if (ExperimentConfig.PHASE_3_VARIANTS.contains(key)) {
+                writeReleaseNegativeResult(result);
+            } else {
+                writeResult(result);
+            }
             return result;
         } catch (Exception e) {
             recordSafeHarnessFailure(scenarioId, variantId, e);
@@ -67,9 +79,38 @@ public final class ScenarioEngine {
                     scenarioId, variantId, "harness-error", "inconclusive",
                     List.of("safe-evidence-finalization"), null,
                     "not-applicable", "pending-collection", phaseTwo);
-            writeResult(inconclusive);
+            if (ExperimentConfig.PHASE_3_VARIANTS.contains(key)) {
+                writeReleaseNegativeResult(inconclusive);
+            } else {
+                writeResult(inconclusive);
+            }
             return inconclusive;
         }
+    }
+
+    private ScenarioResult releaseNegativeScenario(String scenarioId, String variantId) {
+        ReleaseValidator.FailureCategory expectedCategory = EXPECTED_RELEASE_FAILURE.get(variantId);
+        ReleaseValidator.FailureCategory actualCategory = null;
+        boolean denied;
+        try {
+            new ReleaseValidator().validateFixture(variantId);
+            denied = false;
+        } catch (ReleaseValidator.ReleaseValidationException e) {
+            denied = true;
+            actualCategory = e.category();
+        }
+        String actualDecision = denied ? "deny" : "allow";
+        try (TelemetryRecorder telemetry = new TelemetryRecorder(
+                runtimeRoot, runId, scenarioId, variantId, "consumer")) {
+            telemetry.decision("release.validation", "release_validation", actualDecision,
+                    denied ? actualCategory.name().toLowerCase(Locale.ROOT) : "unexpectedly-accepted");
+        }
+        if (!denied || expectedCategory != actualCategory) {
+            throw new IllegalStateException("Release negative oracle mismatch for variant " + variantId);
+        }
+        return new ScenarioResult(scenarioId, variantId, actualDecision, "pass",
+                List.of("release.schema", "release.reference-cardinality", "release.byte-digests"),
+                null, "not-applicable", "pending-collection", null);
     }
 
     public List<ScenarioResult> runPhaseOneSuite() {
@@ -170,7 +211,7 @@ public final class ScenarioEngine {
     public void resetForScenario(String scenarioId, String variantId) {
         String key = scenarioId + "/" + variantId;
         if (!ExperimentConfig.IMPLEMENTED_VARIANTS.contains(key)) {
-            throw new IllegalArgumentException("Scenario/variant is not implemented through Phase 2: " + key);
+            throw new IllegalArgumentException("Scenario/variant is not implemented: " + key);
         }
         reset();
         for (String channel : List.of(
@@ -334,6 +375,34 @@ public final class ScenarioEngine {
         }
         StackTraceElement location = trace[0];
         return location.getClassName() + "#" + location.getMethodName() + ":" + location.getLineNumber();
+    }
+
+    private void writeReleaseNegativeResult(ScenarioResult result) {
+        ObjectNode json = JsonSupport.MAPPER.createObjectNode();
+        json.put("schemaVersion", "3.0.0");
+        json.put("runId", runId);
+        json.put("scenarioId", result.scenarioId());
+        json.put("variantId", result.variantId());
+        json.put("releaseId", ExperimentConfig.RELEASE_ID);
+        json.put("releaseVersion", ExperimentConfig.RELEASE_VERSION);
+        json.put("parameterSetId", ExperimentConfig.PARAMETER_SET_ID);
+        json.put("expected", "deny");
+        json.put("actual", result.actual());
+        json.put("status", result.status());
+        var checkpoints = json.putArray("checkpoints");
+        result.checkpoints().forEach(checkpoints::add);
+        json.put("telemetryRef", "telemetry/decisions.jsonl");
+        if (result.auditRef() == null) {
+            json.putNull("auditRef");
+        } else {
+            json.put("auditRef", result.auditRef());
+        }
+        json.put("contractValidation", result.contractValidation());
+        json.put("leakageValidation", result.leakageValidation());
+        JsonSupport.validate(JsonSupport.readResource("experiment-001/schemas/scenario-result-phase-3.schema.json"),
+                json, "scenario result");
+        JsonSupport.writeJson(runtimeRoot.resolve("results")
+                .resolve(result.scenarioId() + "--" + result.variantId() + ".json"), json);
     }
 
     private void writeResult(ScenarioResult result) {

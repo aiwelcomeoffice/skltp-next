@@ -1,0 +1,3 @@
+# Local Workshop sandbox definitions and instance identifiers (at any depth).
+.workshop/
+.workshop.lock

@@ -156,7 +156,7 @@ public final class ExperimentCli {
         String scenario = required(options, "scenario");
         String variant = required(options, "variant");
         if (!ExperimentConfig.IMPLEMENTED_VARIANTS.contains(scenario + "/" + variant)) {
-            throw new IllegalArgumentException("Scenario/variant is not implemented through Phase 2");
+            throw new IllegalArgumentException("Scenario/variant is not implemented");
         }
         new ScenarioEngine(ExperimentConfig.runtimeRoot(runId), runId)
                 .resetForScenario(scenario, variant);

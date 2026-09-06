@@ -51,6 +51,10 @@ public final class EvidenceCollector {
             "E001-TOK-001--missing-required-claim.json",
             "E001-TOK-001--wrong-client-id.json",
             "E001-TOK-001--wrong-sub.json");
+    private static final List<String> PHASE_3_RESULTS = List.of(
+            "E001-REL-001--missing-ref.json",
+            "E001-REL-001--ambiguous-ref.json",
+            "E001-REL-001--digest-mutation.json");
     private static final Set<String> FORBIDDEN_FIELD_NAMES = Set.of(
             "access_token", "client_assertion", "dpop_proof", "private_key",
             "raw_claims", "api_payload", "authorization_header");
@@ -66,8 +70,8 @@ public final class EvidenceCollector {
 
     public CollectionResult collect() {
         try {
-            boolean phaseTwo = phaseTwoResultsPresent();
-            List<String> expectedResults = expectedResults(phaseTwo);
+            int phase = highestPresentPhase();
+            List<String> expectedResults = expectedResults(phase);
             if (Files.exists(evidenceRoot)) {
                 deleteTree(evidenceRoot);
             }
@@ -95,7 +99,7 @@ public final class EvidenceCollector {
             LeakageResult leakage = scan(false);
             JsonSupport.writeJson(evidenceRoot.resolve("leakage/report.json"), leakage.toMap());
             JsonSupport.writeJson(evidenceRoot.resolve("completeness.json"),
-                    completeness(leakage, phaseTwo, expectedResults));
+                    completeness(leakage, phase, expectedResults));
 
             boolean resultsPass = expectedResults.stream().allMatch(name ->
                     "pass".equals(read(evidenceRoot.resolve("results").resolve(name))
@@ -114,22 +118,20 @@ public final class EvidenceCollector {
                             "sha256", JsonSupport.sha256(path)))
                     .toList();
             ObjectNode manifest = JsonSupport.MAPPER.createObjectNode();
-            manifest.put("schemaVersion", phaseTwo ? "2.0.0" : "1.0.0");
+            manifest.put("schemaVersion", schemaVersionForPhase(phase));
             manifest.put("runId", runId);
-            manifest.put("phase", phaseTwo ? "phase-2" : "phase-1");
+            manifest.put("phase", "phase-" + phase);
             manifest.put("status", status);
             manifest.put("sourceCommit", git("rev-parse", "HEAD").trim());
             manifest.put("gitStatusClass", git("status", "--porcelain").isBlank()
-                    ? "clean" : phaseTwo ? "phase-2-working-tree" : "phase-1-working-tree");
+                    ? "clean" : "phase-" + phase + "-working-tree");
             ArrayNode files = manifest.putArray("files");
             fileEntries.forEach(entry -> {
                 ObjectNode file = files.addObject();
                 file.put("path", entry.get("path"));
                 file.put("sha256", entry.get("sha256"));
             });
-            JsonSupport.validate(JsonSupport.readResource(phaseTwo
-                            ? "experiment-001/schemas/evidence-manifest-phase-2.schema.json"
-                            : "experiment-001/schemas/evidence-manifest.schema.json"),
+            JsonSupport.validate(JsonSupport.readResource(manifestSchemaForPhase(phase)),
                     manifest, "evidence manifest");
             JsonSupport.writeJson(evidenceRoot.resolve("manifest.json"), manifest);
             writeChecksums();
@@ -141,16 +143,12 @@ public final class EvidenceCollector {
 
     public ValidationResult validate() {
         JsonNode manifest = read(evidenceRoot.resolve("manifest.json"));
-        boolean phaseTwo = "phase-2".equals(manifest.path("phase").asText());
-        JsonSupport.validate(JsonSupport.readResource(phaseTwo
-                        ? "experiment-001/schemas/evidence-manifest-phase-2.schema.json"
-                        : "experiment-001/schemas/evidence-manifest.schema.json"),
+        int phase = phaseFromManifest(manifest);
+        JsonSupport.validate(JsonSupport.readResource(manifestSchemaForPhase(phase)),
                 manifest, "evidence manifest");
-        for (String name : expectedResults(phaseTwo)) {
+        for (String name : expectedResults(phase)) {
             JsonNode result = read(evidenceRoot.resolve("results").resolve(name));
-            JsonSupport.validate(JsonSupport.readResource(PHASE_2_RESULTS.contains(name)
-                            ? "experiment-001/schemas/scenario-result-phase-2.schema.json"
-                            : "experiment-001/schemas/scenario-result.schema.json"),
+            JsonSupport.validate(JsonSupport.readResource(resultSchemaFor(name)),
                     result, "scenario result " + name);
             if (!"pass".equals(result.required("status").textValue())) {
                 return new ValidationResult("inconclusive", false, false, false);
@@ -228,8 +226,10 @@ public final class EvidenceCollector {
                 "release-index.schema.json",
                 "scenario-result.schema.json",
                 "scenario-result-phase-2.schema.json",
+                "scenario-result-phase-3.schema.json",
                 "evidence-manifest.schema.json",
                 "evidence-manifest-phase-2.schema.json",
+                "evidence-manifest-phase-3.schema.json",
                 "scenario-catalog-phase-2.schema.json",
                 "security-errors-phase-2.schema.json",
                 "service-metadata.schema.json",
@@ -379,7 +379,7 @@ public final class EvidenceCollector {
                     return false;
                 }
             }
-            if (phaseTwoResultsPresent()) {
+            if (highestPresentPhase() >= 2) {
                 for (String key : ExperimentConfig.PHASE_2_VARIANTS) {
                     String[] parts = key.split("/", 2);
                     List<JsonNode> selected = nodes.stream()
@@ -402,15 +402,11 @@ public final class EvidenceCollector {
         }
     }
 
-    private Map<String, Object> completeness(LeakageResult leakage, boolean phaseTwo,
+    private Map<String, Object> completeness(LeakageResult leakage, int phase,
                                              List<String> expectedResults) {
-        List<String> expectedVariants = phaseTwo
-                ? java.util.stream.Stream.concat(
-                ExperimentConfig.PHASE_1_VARIANTS.stream(), ExperimentConfig.PHASE_2_VARIANTS.stream())
-                .sorted().toList()
-                : ExperimentConfig.PHASE_1_VARIANTS.stream().sorted().toList();
+        List<String> expectedVariants = expectedVariantsForPhase(phase);
         return Map.of(
-                "phase", phaseTwo ? "phase-2" : "phase-1",
+                "phase", "phase-" + phase,
                 "expectedVariants", expectedVariants,
                 "observedResultFiles", expectedResults,
                 "toolGates", List.of("runtime", "nimbus-dpop", "swagger-parser", "kappa-jackson"),
@@ -420,17 +416,76 @@ public final class EvidenceCollector {
                 "complete", leakage.passed());
     }
 
-    private boolean phaseTwoResultsPresent() {
+    private int highestPresentPhase() {
         Path results = runtimeRoot.resolve("results");
-        return PHASE_2_RESULTS.stream().anyMatch(name -> Files.isRegularFile(results.resolve(name)));
+        if (PHASE_3_RESULTS.stream().anyMatch(name -> Files.isRegularFile(results.resolve(name)))) {
+            return 3;
+        }
+        if (PHASE_2_RESULTS.stream().anyMatch(name -> Files.isRegularFile(results.resolve(name)))) {
+            return 2;
+        }
+        return 1;
     }
 
-    private static List<String> expectedResults(boolean phaseTwo) {
-        if (!phaseTwo) {
-            return PHASE_1_RESULTS;
+    private static int phaseFromManifest(JsonNode manifest) {
+        String phase = manifest.path("phase").asText();
+        return switch (phase) {
+            case "phase-1" -> 1;
+            case "phase-2" -> 2;
+            case "phase-3" -> 3;
+            default -> throw new IllegalStateException("Unknown evidence phase: " + phase);
+        };
+    }
+
+    private static String schemaVersionForPhase(int phase) {
+        return switch (phase) {
+            case 1 -> "1.0.0";
+            case 2 -> "2.0.0";
+            case 3 -> "3.0.0";
+            default -> throw new IllegalArgumentException("Unknown phase " + phase);
+        };
+    }
+
+    private static String manifestSchemaForPhase(int phase) {
+        return switch (phase) {
+            case 1 -> "experiment-001/schemas/evidence-manifest.schema.json";
+            case 2 -> "experiment-001/schemas/evidence-manifest-phase-2.schema.json";
+            case 3 -> "experiment-001/schemas/evidence-manifest-phase-3.schema.json";
+            default -> throw new IllegalArgumentException("Unknown phase " + phase);
+        };
+    }
+
+    private static String resultSchemaFor(String resultFileName) {
+        if (PHASE_3_RESULTS.contains(resultFileName)) {
+            return "experiment-001/schemas/scenario-result-phase-3.schema.json";
         }
+        if (PHASE_2_RESULTS.contains(resultFileName)) {
+            return "experiment-001/schemas/scenario-result-phase-2.schema.json";
+        }
+        return "experiment-001/schemas/scenario-result.schema.json";
+    }
+
+    private static List<String> expectedVariantsForPhase(int phase) {
+        java.util.stream.Stream<String> combined = switch (phase) {
+            case 1 -> ExperimentConfig.PHASE_1_VARIANTS.stream();
+            case 2 -> java.util.stream.Stream.concat(
+                    ExperimentConfig.PHASE_1_VARIANTS.stream(), ExperimentConfig.PHASE_2_VARIANTS.stream());
+            case 3 -> java.util.stream.Stream.of(ExperimentConfig.PHASE_1_VARIANTS,
+                            ExperimentConfig.PHASE_2_VARIANTS, ExperimentConfig.PHASE_3_VARIANTS)
+                    .flatMap(Set::stream);
+            default -> throw new IllegalArgumentException("Unknown phase " + phase);
+        };
+        return combined.sorted().toList();
+    }
+
+    private static List<String> expectedResults(int phase) {
         List<String> combined = new ArrayList<>(PHASE_1_RESULTS);
-        combined.addAll(PHASE_2_RESULTS);
+        if (phase >= 2) {
+            combined.addAll(PHASE_2_RESULTS);
+        }
+        if (phase >= 3) {
+            combined.addAll(PHASE_3_RESULTS);
+        }
         return List.copyOf(combined);
     }
 

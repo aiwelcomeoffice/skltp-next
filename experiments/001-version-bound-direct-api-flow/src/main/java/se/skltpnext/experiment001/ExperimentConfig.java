@@ -51,11 +51,16 @@ public final class ExperimentConfig {
             "E001-TOK-001/missing-required-claim",
             "E001-TOK-001/wrong-client-id",
             "E001-TOK-001/wrong-sub");
+    public static final Set<String> PHASE_3_VARIANTS = Set.of(
+            "E001-REL-001/missing-ref",
+            "E001-REL-001/ambiguous-ref",
+            "E001-REL-001/digest-mutation");
     public static final Set<String> IMPLEMENTED_VARIANTS;
 
     static {
         Set<String> variants = new HashSet<>(PHASE_1_VARIANTS);
         variants.addAll(PHASE_2_VARIANTS);
+        variants.addAll(PHASE_3_VARIANTS);
         IMPLEMENTED_VARIANTS = Set.copyOf(variants);
     }
 

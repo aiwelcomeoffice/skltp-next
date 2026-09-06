@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:skltp-next:experiment-001:schema:evidence-manifest-phase-3:1.0.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "runId", "phase", "status", "sourceCommit", "gitStatusClass", "files"],
+  "properties": {
+    "schemaVersion": {"const": "3.0.0"},
+    "runId": {"type": "string", "pattern": "^[a-zA-Z0-9._-]{1,64}$"},
+    "phase": {"const": "phase-3"},
+    "status": {"enum": ["pass", "fail", "inconclusive"]},
+    "sourceCommit": {"type": "string", "pattern": "^[a-f0-9]{7,40}$"},
+    "gitStatusClass": {"enum": ["clean", "phase-3-working-tree"]},
+    "files": {
+      "type": "array",
+      "minItems": 31,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "sha256"],
+        "properties": {
+          "path": {"type": "string"},
+          "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+        }
+      }
+    }
+  }
+}

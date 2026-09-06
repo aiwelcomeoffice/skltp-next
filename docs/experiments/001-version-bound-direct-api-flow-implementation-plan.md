@@ -3,7 +3,7 @@
 - **Status:** experimental
 - **Datum:** 2026-08-17
 - **Senast uppdaterad:** 2026-08-22
-- **Implementation:** Fas 1 verifierad 2026-08-18; Fas 2 verifierad 2026-08-22; Fas 3–7 inte påbörjade
+- **Implementation:** Fas 1 verifierad 2026-08-18; Fas 2 verifierad 2026-08-22; Fas 3 delvis verifierad (releasefel, se [delrapport](001-version-bound-direct-api-flow-phase-3-release-report.md)); Fas 4–7 inte påbörjade
 - **Planerar:** [Experiment Specification 001](001-version-bound-direct-api-flow.md)
 - **Styrande syntes:** [Syntes 001](../architecture/001-research-synthesis-and-first-experiment-hypothesis.md)
 - **Beslutsräckvidd:** endast den syntetiska experimentharnessen
@@ -970,9 +970,10 @@ Fas 1 och Fas 2 är verifierade och får inte implementeras på nytt. Resultaten
 finns i [Fas 1-rapporten](001-version-bound-direct-api-flow-phase-1-report.md)
 och [Fas 2-rapporten](001-version-bound-direct-api-flow-phase-2-report.md).
 
-Nästa framtida implementation är endast **Fas 3 – release-, discovery-,
-metadata- och lifecyclefel** enligt fasindelningen ovan. Den får slutföra
-övriga redan specificerade varianter i `E001-REL-001` och implementera exakt
+De tre negativa varianterna i `E001-REL-001` är nu verifierade; se
+[delrapporten](001-version-bound-direct-api-flow-phase-3-release-report.md).
+Nästa implementation är återstående **Fas 3 – discovery-, metadata- och
+lifecyclefel** enligt fasindelningen ovan, avgränsad till
 `E001-DIS-002`, `E001-DIS-003`, `E001-META-001`, `E001-META-002` och
 `E001-LIFE-001`. Inga Fas 4-scenarier, containrar, Kubernetes-, CI- eller
-produktionsmekanismer ingår. Denna statusuppdatering påbörjar inte Fas 3.
+produktionsmekanismer ingår. Fas 3 som helhet är ännu inte verifierad.
