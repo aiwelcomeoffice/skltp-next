@@ -6,6 +6,9 @@ och [Fas 2-rapporten](../../docs/experiments/001-version-bound-direct-api-flow-p
 De tre negativa releasevarianterna i Fas 3 är också verifierade; se
 [delrapporten](../../docs/experiments/001-version-bound-direct-api-flow-phase-3-release-report.md).
 Övriga delar av Fas 3 är inte implementerade.
+Fas 3b1 dokumenterar en testad implementationsbegränsning inför
+`E001-DIS-002`; se [observationsrapporten](../../docs/experiments/001-version-bound-direct-api-flow-phase-3b1-report.md).
+Endpointbytesscenariot är fortsatt inte verifierat.
 
 Modulen är en syntetisk lokal experimentharness. Den verifierar fyra
 Fas 1-kombinationer, 16 Fas 2-kombinationer och tre releasefel i Fas 3; den är inte
