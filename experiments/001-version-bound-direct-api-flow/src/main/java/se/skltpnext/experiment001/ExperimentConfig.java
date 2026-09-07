@@ -87,12 +87,18 @@ public final class ExperimentConfig {
             "E001-REL-001/missing-ref",
             "E001-REL-001/ambiguous-ref",
             "E001-REL-001/digest-mutation");
+    public static final Set<String> PHASE_4_VARIANTS = Set.of(
+            "E001-CON-002/wrong-contract-version", "E001-CON-002/invalid-request",
+            "E001-CON-002/invalid-response", "E001-CON-002/undocumented-error",
+            "E001-CON-002/problem-details-internal-detail", "E001-DEP-001/token-slow",
+            "E001-DEP-001/token-unavailable", "E001-DEP-001/producer-slow", "E001-DEP-001/producer-unavailable");
     public static final Set<String> IMPLEMENTED_VARIANTS;
 
     static {
         Set<String> variants = new HashSet<>(PHASE_1_VARIANTS);
         variants.addAll(PHASE_2_VARIANTS);
         variants.addAll(PHASE_3_VARIANTS);
+        variants.addAll(PHASE_4_VARIANTS);
         IMPLEMENTED_VARIANTS = Set.copyOf(variants);
     }
 

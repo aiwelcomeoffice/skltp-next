@@ -1,5 +1,7 @@
 package se.skltpnext.experiment001.producer;
 
+import se.skltpnext.experiment001.dependency.DoubleFault;
+import se.skltpnext.experiment001.evidence.PhaseFourEvents;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.jwk.ECKey;
@@ -44,6 +46,8 @@ public final class ProducerDouble implements HttpHandler {
             "Bearer realm=\"experiment-001\", error=\"insufficient_scope\", scope=\"synthetic.read\"";
     static final String INVALID_DPOP_CHALLENGE = "DPoP error=\"invalid_token\", algs=\"ES256\"";
 
+    private static final JsonNode CONTRACT_FAULTS = JsonSupport.readResource(
+            "experiment-001/scenarios/contract-faults-phase-4-1.0.0.json");
     private final Path runtimeRoot;
     private final String runId;
     private final URI producerEndpoint;
@@ -52,6 +56,10 @@ public final class ProducerDouble implements HttpHandler {
     private final ContractValidators contracts = new ContractValidators();
     private volatile DefaultDPoPSingleUseChecker dpopChecker;
     private volatile LocalPolicyDecision localPolicyDecision;
+    private DoubleFault fault = DoubleFault.NONE;
+    public synchronized void setFault(DoubleFault value) { fault = value; }
+    public synchronized void drain() { /* Acquiring the handler lock proves completion. */ }
+
 
     public ProducerDouble(Path runtimeRoot, String runId, URI producerEndpoint) {
         this(runtimeRoot, runId, producerEndpoint, "PRODUCER-ENDPOINT-REV-1");
@@ -67,7 +75,7 @@ public final class ProducerDouble implements HttpHandler {
     }
 
     @Override
-    public void handle(HttpExchange exchange) throws IOException {
+    public synchronized void handle(HttpExchange exchange) throws IOException {
         String scenario = safeHeader(exchange, "X-Experiment-Scenario", "runtime");
         String variant = safeHeader(exchange, "X-Experiment-Variant", "baseline");
         try (TelemetryRecorder telemetry = new TelemetryRecorder(
@@ -77,8 +85,25 @@ public final class ProducerDouble implements HttpHandler {
             boolean success = false;
             try (var ignored = span.makeCurrent()) {
                 URI requestUri = producerEndpoint.resolve(exchange.getRequestURI().toString());
-                var providerRequest = contracts.validateProviderRequest(requestUri);
+                long arrival = System.nanoTime();
+                if (fault != DoubleFault.NONE) {
+                    faultEvent(scenario, variant, "server-arrival", 0, "received");
+                    if (fault == DoubleFault.UNAVAILABLE) {
+                        telemetry.network(callerContext, "producer-b", endpointId, "GET", "/synthetic-records/{recordId}", false);
+                        send(exchange, 503, "application/json", "{}");
+                        faultEvent(scenario, variant, "server-completion", System.nanoTime() - arrival, "unavailable");
+                        return;
+                    }
+                }
+                var providerRequest = contracts.observeRequest("provider", requestUri,
+                        exchange.getRequestHeaders().getFirst("Accept"));
                 telemetry.contract(providerRequest.role(), providerRequest.phase(), providerRequest.result());
+                if (!providerRequest.passed()) {
+                    telemetry.decision("producer.contract-request", "contract_validation", "deny", "invalid-request");
+                    telemetry.network(callerContext, "producer-b", endpointId, "GET", "/synthetic-records/{recordId}", false);
+                    sendProblem(exchange, telemetry, 404, "urn:skltp-next:experiment-001:error:not-found", "Not found", null);
+                    return;
+                }
 
                 PresentedToken presentedToken = presentedToken(
                         exchange.getRequestHeaders().getFirst("Authorization"));
@@ -121,16 +146,62 @@ public final class ProducerDouble implements HttpHandler {
                 telemetry.audit("producer.authorization", "allow", "local-policy-allow",
                         localPolicyDecision.policyVersion());
 
+                if (fault == DoubleFault.INTERNAL_DETAIL) {
+                    var problem = JsonSupport.MAPPER.createObjectNode();
+                    problem.put("type", "urn:skltp-next:experiment-001:error:local-policy-deny");
+                    problem.put("title", "Forbidden by local policy"); problem.put("status", 403);
+                    String internal = new CanaryRegistry(runtimeRoot.resolve("private")).newValue("sensitive_claim");
+                    problem.put("detail", internal);
+                    var candidate = contracts.observeResponse("provider", 403, "application/problem+json", JsonSupport.compact(problem));
+                    telemetry.contract("provider", "problem-candidate", candidate.result());
+                    if (candidate.passed()) throw new IllegalStateException("Problem guard conformance failure");
+                    telemetry.decision("producer.problem-details", "contract_validation", "deny", "internal-detail-blocked");
+                    // Block the entire candidate. Construct a separate safe error, never forward exception detail.
+                    telemetry.network(callerContext, "producer-b", endpointId, "GET", "/synthetic-records/{recordId}", false);
+                    sendProblem(exchange, telemetry, 403, "urn:skltp-next:experiment-001:error:local-policy-deny", "Forbidden by local policy", null);
+                    faultEvent(scenario, variant, "server-completion", System.nanoTime() - arrival, "candidate-blocked");
+                    return;
+                }
+                if (fault == DoubleFault.UNDOCUMENTED_ERROR) {
+                    int status = CONTRACT_FAULTS.required("undocumentedStatus").asInt();
+                    String body = JsonSupport.compact(JsonSupport.MAPPER.createObjectNode()
+                            .put("type", "urn:skltp-next:experiment-001:error:undocumented")
+                            .put("title", "Synthetic error").put("status", status));
+                    var validation = contracts.observeResponse("provider", status, "application/problem+json", body);
+                    telemetry.contract(validation.role(), validation.phase(), validation.result());
+                    telemetry.decision("producer.contract-response", "contract_validation", "deny", "undocumented-error");
+                    telemetry.network(callerContext, "producer-b", endpointId, "GET", "/synthetic-records/{recordId}", false);
+                    // Explicit faulty-provider stimulus: retain the exact response for independent consumer validation.
+                    send(exchange, status, "application/problem+json", body);
+                    faultEvent(scenario, variant, "server-completion", System.nanoTime() - arrival, "fault-response-sent");
+                    return;
+                }
                 telemetry.decision("producer.business-operation", "business_operation",
                         "allow", "synthetic-read-executed");
-                String body = "{\"recordId\":\"synthetic-record-001\",\"status\":\"available\"}";
+                if (fault != DoubleFault.NONE)
+                    faultEvent(scenario, variant, "business-operation", System.nanoTime() - arrival, "executed");
+                String body = fault == DoubleFault.INVALID_RESPONSE
+                        ? JsonSupport.compact(CONTRACT_FAULTS.required("invalidResponse"))
+                        : "{\"recordId\":\"synthetic-record-001\",\"status\":\"available\"}";
                 new CanaryRegistry(runtimeRoot.resolve("private")).register("api_payload", body);
-                var providerResponse = contracts.validateProviderResponse(body);
+                var providerResponse = contracts.observeResponse("provider", 200, "application/json", body);
                 telemetry.contract(providerResponse.role(), providerResponse.phase(), providerResponse.result());
-                success = true;
+                if (!providerResponse.passed())
+                    telemetry.decision("producer.contract-response", "contract_validation", "deny", "invalid-response");
+                success = providerResponse.passed();
                 telemetry.network(callerContext, "producer-b", endpointId,
                         exchange.getRequestMethod(), "/synthetic-records/{recordId}", true);
-                send(exchange, 200, "application/json", body);
+                fault.delayResponse();
+                try {
+                    send(exchange, 200, "application/json", body);
+                    if (fault != DoubleFault.NONE)
+                        faultEvent(scenario, variant, "server-completion", System.nanoTime() - arrival,
+                                fault == DoubleFault.SLOW ? "late-response-sent" : "fault-response-sent");
+                } catch (IOException e) {
+                    if (fault != DoubleFault.SLOW) throw e;
+                    exchange.close();
+                    faultEvent(scenario, variant, "server-completion", System.nanoTime() - arrival, "late-response-disconnected");
+                }
             } catch (TokenFailure e) {
                 if (e.safeReason().equals("signing-key-revoked")) telemetry.audit("producer.token-validation", "deny", e.safeReason());
                 telemetry.decision("producer.token-validation", "token_validation",
@@ -190,12 +261,19 @@ public final class ProducerDouble implements HttpHandler {
         }
     }
 
+    private void faultEvent(String scenario, String variant, String kind, long nanos, String result) {
+        PhaseFourEvents.record(runtimeRoot, runId, scenario, variant,
+                kind, java.util.Map.of("dependency", "producer", "durationMillis", nanos / 1_000_000,
+                        "result", result, "fault", fault.name()));
+    }
+
     public synchronized void reset() {
         if (dpopChecker != null) {
             dpopChecker.shutdown();
         }
         dpopChecker = NimbusDpopGate.newChecker();
         localPolicyDecision = LocalPolicyDecision.ALLOW;
+        fault = DoubleFault.NONE;
     }
 
     /** Called only by the harness control plane; request scenario headers never select policy. */

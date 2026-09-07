@@ -1,5 +1,7 @@
 package se.skltpnext.experiment001.authorization;
 
+import se.skltpnext.experiment001.dependency.DoubleFault;
+import se.skltpnext.experiment001.evidence.PhaseFourEvents;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
@@ -58,6 +60,10 @@ public final class AuthorizationServerDouble implements HttpHandler {
     private final MetadataStores metadataStores;
     private volatile DefaultDPoPSingleUseChecker dpopChecker;
     private volatile Map<String, Date> assertionReplay;
+    private DoubleFault fault = DoubleFault.NONE;
+    public synchronized void setFault(DoubleFault value) { fault = value; }
+    public synchronized void drain() { /* Acquiring the handler lock proves completion. */ }
+
 
     public AuthorizationServerDouble(Path runtimeRoot, String runId, URI tokenEndpoint,
                                      CryptoMaterial material) {
@@ -70,7 +76,7 @@ public final class AuthorizationServerDouble implements HttpHandler {
     }
 
     @Override
-    public void handle(HttpExchange exchange) throws IOException {
+    public synchronized void handle(HttpExchange exchange) throws IOException {
         String scenario = safeHeader(exchange, "X-Experiment-Scenario", "runtime");
         String variant = safeHeader(exchange, "X-Experiment-Variant", "baseline");
         try (TelemetryRecorder telemetry = new TelemetryRecorder(
@@ -81,6 +87,15 @@ public final class AuthorizationServerDouble implements HttpHandler {
                 send(exchange, 404, "application/problem+json",
                         "{\"type\":\"urn:skltp-next:experiment-001:error:not-found\",\"title\":\"Not found\",\"status\":404}");
                 return;
+            }
+            long arrival = System.nanoTime();
+            if (fault != DoubleFault.NONE) {
+                faultEvent(scenario, variant, "server-arrival", 0, "received");
+                if (fault == DoubleFault.UNAVAILABLE) {
+                    send(exchange, 503, "application/json", "{}");
+                    faultEvent(scenario, variant, "server-completion", System.nanoTime() - arrival, "unavailable");
+                    return;
+                }
             }
             try {
                 Map<String, List<String>> form = parseForm(new String(
@@ -130,7 +145,16 @@ public final class AuthorizationServerDouble implements HttpHandler {
                 response.put("scope", requestedScope);
                 telemetry.decision("authorization-server.token-issuance", "token_issuance",
                         "allow", confirmation == null ? "rfc9068-bearer" : "rfc9068-dpop-bound");
-                send(exchange, 200, "application/json", JsonSupport.compact(response));
+                fault.delayResponse();
+                try {
+                    send(exchange, 200, "application/json", JsonSupport.compact(response));
+                    if (fault == DoubleFault.SLOW)
+                        faultEvent(scenario, variant, "server-completion", System.nanoTime() - arrival, "late-response-sent");
+                } catch (IOException e) {
+                    if (fault != DoubleFault.SLOW) throw e;
+                    exchange.close();
+                    faultEvent(scenario, variant, "server-completion", System.nanoTime() - arrival, "late-response-disconnected");
+                }
             } catch (Exception e) {
                 telemetry.decision("authorization-server.client-authentication",
                         "client_authentication", "deny", "invalid-client-or-proof");
@@ -146,6 +170,13 @@ public final class AuthorizationServerDouble implements HttpHandler {
         }
         dpopChecker = NimbusDpopGate.newChecker();
         assertionReplay = new ConcurrentHashMap<>();
+        fault = DoubleFault.NONE;
+    }
+
+    private void faultEvent(String scenario, String variant, String kind, long nanos, String result) {
+        PhaseFourEvents.record(runtimeRoot, runId, scenario, variant,
+                kind, Map.of("dependency", "authorization-server", "durationMillis", nanos / 1_000_000,
+                        "result", result, "fault", fault.name()));
     }
 
     public String warmUpSecurityLibraries() {

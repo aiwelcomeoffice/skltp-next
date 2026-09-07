@@ -53,6 +53,8 @@ public final class EvidenceCollector {
             "E001-TOK-001--wrong-sub.json");
     private static final List<String> PHASE_3_RESULTS = ExperimentConfig.PHASE_3_VARIANTS.stream()
             .sorted().map(key -> key.replace("/", "--") + ".json").toList();
+    private static final List<String> PHASE_4_RESULTS = ExperimentConfig.PHASE_4_VARIANTS.stream()
+            .sorted().map(key -> key.replace("/", "--") + ".json").toList();
     private static final Set<String> FORBIDDEN_FIELD_NAMES = Set.of(
             "access_token", "client_assertion", "dpop_proof", "private_key",
             "raw_claims", "api_payload", "authorization_header");
@@ -84,6 +86,7 @@ public final class EvidenceCollector {
                 copyRequired("events/telemetry/discovery.jsonl", "telemetry/discovery.jsonl");
                 copyRequired("events/telemetry/transitions.jsonl", "telemetry/transitions.jsonl");
             }
+            if (phase >= 4) copyRequired("events/phase-4/observations.jsonl", "phase-4/observations.jsonl");
             copyOrCreate("events/telemetry/decisions.jsonl", "telemetry/decisions.jsonl");
             copyOrCreate("events/telemetry/dependencies.jsonl", "telemetry/dependencies.jsonl");
             copyOrCreate("events/audit/records.jsonl", "audit/records.jsonl");
@@ -105,6 +108,9 @@ public final class EvidenceCollector {
             Map<String, Boolean> phaseThree = phase >= 3 ? new PhaseThreeEvidence(evidenceRoot, runId).evaluate() : Map.of();
             boolean observationsPass = phaseThree.values().stream().allMatch(Boolean::booleanValue);
             if (phase >= 3) JsonSupport.writeJson(evidenceRoot.resolve("validation/phase-3.json"), phaseThree);
+            Map<String, Boolean> phaseFour = phase >= 4 ? new PhaseFourEvidence(evidenceRoot, runId).evaluate() : Map.of();
+            observationsPass &= phaseFour.values().stream().allMatch(Boolean::booleanValue);
+            if (phase >= 4) JsonSupport.writeJson(evidenceRoot.resolve("validation/phase-4.json"), phaseFour);
             LeakageResult leakage = scan(false);
             JsonSupport.writeJson(evidenceRoot.resolve("leakage/report.json"), leakage.toMap());
             JsonSupport.writeJson(evidenceRoot.resolve("completeness.json"),
@@ -119,7 +125,14 @@ public final class EvidenceCollector {
             String status = resultsPass && gatesPass && observationsPass && leakage.passed() && directLedgerPass
                     ? "pass" : "inconclusive";
 
-            if (phase >= 3) JsonSupport.writeJson(evidenceRoot.resolve("classification.json"), Map.of(
+            if (phase >= 4) {
+                boolean failed = PHASE_4_RESULTS.stream().anyMatch(name -> "fail".equals(
+                        read(evidenceRoot.resolve("results").resolve(name)).path("status").asText()));
+                if (failed) status = "fail";
+                JsonSupport.writeJson(evidenceRoot.resolve("classification.json"), Map.of(
+                        "scope", "phase-1-through-4", "phaseFourResult", failed ? "falsified" : status.equals("pass") ? "verified" : "inconclusive",
+                        "experiment001", "not-classified", "observationsRef", "validation/phase-4.json"));
+            } else if (phase >= 3) JsonSupport.writeJson(evidenceRoot.resolve("classification.json"), Map.of(
                     "scope", "phase-1-through-3", "phaseThreeResult", status.equals("pass") ? "verified" : "inconclusive",
                     "experiment001", "not-classified", "observationsRef", "validation/phase-3.json"));
             List<Map<String, String>> fileEntries = evidenceFiles().stream()
@@ -182,6 +195,15 @@ public final class EvidenceCollector {
                 evidenceRoot.relativize(path).toString().replace('\\', '/').matches("(?i)(.*[/])?private([/].*)?")
                         || path.getFileName().toString().matches("(?i).*(\\.p12|\\.jwk(?:\\.json)?|\\.pem|\\.key|keystore|passwords?)"));
         boolean observations = phase < 3 || new PhaseThreeEvidence(evidenceRoot, runId).evaluate().values().stream().allMatch(Boolean::booleanValue);
+        observations &= phase < 4 || new PhaseFourEvidence(evidenceRoot, runId).evaluate().values().stream().allMatch(Boolean::booleanValue);
+        if (phase >= 4) {
+            var classification = read(evidenceRoot.resolve("classification.json"));
+            observations &= "verified".equals(classification.path("phaseFourResult").asText())
+                    && "not-classified".equals(classification.path("experiment001").asText())
+                    && "phase-1-through-4".equals(classification.path("scope").asText())
+                    && read(evidenceRoot.resolve("validation/phase-4.json")).equals(JsonSupport.MAPPER.valueToTree(
+                            new PhaseFourEvidence(evidenceRoot, runId).evaluate()));
+        }
         boolean complete = completenessMatches(phase);
         boolean passed = observations && complete && checksums && manifestEntries && leakage.passed() && ledger && noPrivate
                 && "pass".equals(manifest.required("status").textValue());
@@ -247,6 +269,8 @@ public final class EvidenceCollector {
         JsonNode releaseIndex = JsonSupport.readResource("experiment-001/release/index-1.0.0.json");
         Map<String, String> schemas = new TreeMap<>();
         for (String schema : List.of(
+                "scenario-result-phase-4.schema.json", "evidence-manifest-phase-4.schema.json",
+                "scenario-catalog-phase-4.schema.json", "observation-phase-4.schema.json",
                 "release-index.schema.json",
                 "scenario-result.schema.json",
                 "scenario-result-phase-2.schema.json",
@@ -270,6 +294,8 @@ public final class EvidenceCollector {
                         "experiment-001/release/index-1.0.0.json")),
                 "releaseReferences", releaseIndex.required("references"),
                 "schemas", schemas,
+                "phaseFourScenarioCatalogSha256", JsonSupport.sha256(JsonSupport.readResourceBytes("experiment-001/scenarios/catalog-phase-4-1.0.0.json")),
+                "phaseFourContractFaultsSha256", JsonSupport.sha256(JsonSupport.readResourceBytes("experiment-001/scenarios/contract-faults-phase-4-1.0.0.json")),
                 "phaseThreeScenarioCatalogSha256", JsonSupport.sha256(JsonSupport.readResourceBytes("experiment-001/scenarios/catalog-phase-3-1.0.0.json")),
                 "phaseThreeMetadataFaultsSha256", JsonSupport.sha256(JsonSupport.readResourceBytes("experiment-001/scenarios/metadata-faults-phase-3-1.0.0.json")),
                 "phaseTwoScenarioCatalogSha256", JsonSupport.sha256(JsonSupport.readResourceBytes(
@@ -442,11 +468,12 @@ public final class EvidenceCollector {
                 "channels", List.of("telemetry", "audit", "contract", "dependency",
                         "network", "external-errors", "harness-errors", "results", "captured-console", "metadata", "discovery", "transitions"),
                 "leakageCanaryClasses", leakage.canaryClasses(),
-                "complete", leakage.passed() && (phase < 3 || new PhaseThreeEvidence(evidenceRoot, runId).evaluate().values().stream().allMatch(Boolean::booleanValue)));
+                "complete", leakage.passed() && (phase < 4 || new PhaseFourEvidence(evidenceRoot, runId).evaluate().values().stream().allMatch(Boolean::booleanValue)) && (phase < 3 || new PhaseThreeEvidence(evidenceRoot, runId).evaluate().values().stream().allMatch(Boolean::booleanValue)));
     }
 
     private int highestPresentPhase() {
         Path results = runtimeRoot.resolve("results");
+        if (PHASE_4_RESULTS.stream().anyMatch(name -> Files.isRegularFile(results.resolve(name)))) return 4;
         if (PHASE_3_RESULTS.stream().anyMatch(name -> Files.isRegularFile(results.resolve(name)))) {
             return 3;
         }
@@ -462,6 +489,7 @@ public final class EvidenceCollector {
             case "phase-1" -> 1;
             case "phase-2" -> 2;
             case "phase-3" -> 3;
+            case "phase-4" -> 4;
             default -> throw new IllegalStateException("Unknown evidence phase: " + phase);
         };
     }
@@ -471,6 +499,7 @@ public final class EvidenceCollector {
             case 1 -> "1.0.0";
             case 2 -> "2.0.0";
             case 3 -> "3.1.0";
+            case 4 -> "4.0.0";
             default -> throw new IllegalArgumentException("Unknown phase " + phase);
         };
     }
@@ -480,11 +509,13 @@ public final class EvidenceCollector {
             case 1 -> "experiment-001/schemas/evidence-manifest.schema.json";
             case 2 -> "experiment-001/schemas/evidence-manifest-phase-2.schema.json";
             case 3 -> "experiment-001/schemas/evidence-manifest-phase-3-1.1.0.schema.json";
+            case 4 -> "experiment-001/schemas/evidence-manifest-phase-4.schema.json";
             default -> throw new IllegalArgumentException("Unknown phase " + phase);
         };
     }
 
     private static String resultSchemaFor(String resultFileName) {
+        if (PHASE_4_RESULTS.contains(resultFileName)) return "experiment-001/schemas/scenario-result-phase-4.schema.json";
         if (PHASE_3_RESULTS.contains(resultFileName)) {
             return "experiment-001/schemas/scenario-result-phase-3-1.1.0.schema.json";
         }
@@ -499,6 +530,7 @@ public final class EvidenceCollector {
             case 1 -> ExperimentConfig.PHASE_1_VARIANTS.stream();
             case 2 -> java.util.stream.Stream.concat(
                     ExperimentConfig.PHASE_1_VARIANTS.stream(), ExperimentConfig.PHASE_2_VARIANTS.stream());
+            case 4 -> ExperimentConfig.IMPLEMENTED_VARIANTS.stream();
             case 3 -> java.util.stream.Stream.of(ExperimentConfig.PHASE_1_VARIANTS,
                             ExperimentConfig.PHASE_2_VARIANTS, ExperimentConfig.PHASE_3_VARIANTS)
                     .flatMap(Set::stream);
@@ -515,6 +547,7 @@ public final class EvidenceCollector {
         if (phase >= 3) {
             combined.addAll(PHASE_3_RESULTS);
         }
+        if (phase >= 4) combined.addAll(PHASE_4_RESULTS);
         return List.copyOf(combined);
     }
 

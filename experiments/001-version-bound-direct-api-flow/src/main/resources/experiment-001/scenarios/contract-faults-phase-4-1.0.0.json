@@ -1,0 +1,9 @@
+{
+  "version": "1.0.0",
+  "offeredContractVersion": "2.0.0",
+  "invalidRecordPath": "/synthetic-records/invalid-record",
+  "invalidResponse": {
+    "recordId": "synthetic-record-001"
+  },
+  "undocumentedStatus": 418
+}

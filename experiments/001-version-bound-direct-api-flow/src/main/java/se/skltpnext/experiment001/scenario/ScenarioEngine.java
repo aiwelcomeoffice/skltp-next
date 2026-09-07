@@ -55,6 +55,8 @@ public final class ScenarioEngine {
         }
         resetForScenario(scenarioId, variantId);
         try {
+            if (ExperimentConfig.PHASE_4_VARIANTS.contains(key))
+                return new PhaseFourScenarioRunner(runtimeRoot, runId).run(scenarioId, variantId);
             ScenarioResult result = switch (key) {
                 case "E001-REL-001/valid" -> releaseScenario(scenarioId, variantId);
                 case "E001-DIS-001/baseline" -> discoveryScenario(scenarioId, variantId);
@@ -74,6 +76,9 @@ public final class ScenarioEngine {
             return result;
         } catch (Exception e) {
             recordSafeHarnessFailure(scenarioId, variantId, e);
+            if (ExperimentConfig.PHASE_4_VARIANTS.contains(key)) {
+                return PhaseFourScenarioRunner.inconclusive(runtimeRoot, runId, scenarioId, variantId);
+            }
             PhaseTwoDetails phaseTwo = ExperimentConfig.PHASE_2_VARIANTS.contains(key)
                     ? PhaseTwoScenarioRunner.inconclusiveDetailsFor(scenarioId, variantId) : null;
             ScenarioResult inconclusive = new ScenarioResult(
@@ -205,6 +210,8 @@ public final class ScenarioEngine {
     }
 
     public void reset() {
+        postReset(environment.authorizationServerEndpoint().resolve("/__drain"));
+        postReset(environment.producerEndpoint().resolve("/__drain"));
         PhaseThreeScenarioRunner.restoreMetadata(runtimeRoot, environment);
         postReset(environment.secondProducerEndpoint().resolve("/__reset"));
         postReset(environment.authorizationServerEndpoint().resolve("/__reset"));
@@ -218,6 +225,7 @@ public final class ScenarioEngine {
         }
         reset();
         for (String channel : List.of(
+                "events/phase-4/observations.jsonl",
                 "events/telemetry/metadata.jsonl",
                 "events/telemetry/discovery.jsonl",
                 "events/telemetry/transitions.jsonl",

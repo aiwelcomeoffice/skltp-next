@@ -1,5 +1,6 @@
 package se.skltpnext.experiment001.consumer;
 
+import se.skltpnext.experiment001.evidence.PhaseFourEvents;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.jwk.ECKey;
@@ -43,9 +44,13 @@ public final class Consumer {
     private final String runId;
     private final CryptoMaterial material;
     private final HttpClient httpClient;
+    private final boolean observeFaults;
     private final ContractValidators contracts = new ContractValidators();
 
-    public Consumer(Path runtimeRoot, String runId) {
+    public Consumer(Path runtimeRoot, String runId) { this(runtimeRoot, runId, false); }
+
+    public Consumer(Path runtimeRoot, String runId, boolean observeFaults) {
+        this.observeFaults = observeFaults;
         this.runtimeRoot = runtimeRoot;
         this.runId = runId;
         material = CryptoMaterial.load(runtimeRoot);
@@ -124,6 +129,8 @@ public final class Consumer {
             telemetry.dependency("authorization-server", "success",
                     Duration.ofNanos(System.nanoTime() - tokenStart).toMillis());
             return token;
+        } catch (DependencyFailure e) {
+            throw e;
         } catch (TokenRequestDenied e) {
             try (var telemetry = new TelemetryRecorder(runtimeRoot, runId, scenarioId, variantId, "consumer")) {
                 telemetry.dependency("authorization-server", "error", Duration.ofNanos(System.nanoTime() - requestStarted).toMillis());
@@ -138,10 +145,21 @@ public final class Consumer {
                                          MetadataStores.DiscoveryResult discovery,
                                          String authorizationScheme, String accessToken,
                                          ECKey proofKey, String actorContext) {
+        return callResource(scenarioId, variantId, discovery, authorizationScheme, accessToken,
+                proofKey, actorContext, false);
+    }
+
+    /** The invalid URI is an explicit contract-test stimulus, sent to exercise the provider gate. */
+    public ResourceResponse callResource(String scenarioId, String variantId,
+                                         MetadataStores.DiscoveryResult discovery,
+                                         String authorizationScheme, String accessToken,
+                                         ECKey proofKey, String actorContext, boolean dispatchInvalidRequest) {
         try (TelemetryRecorder telemetry = new TelemetryRecorder(
                 runtimeRoot, runId, scenarioId, variantId, "consumer")) {
-            URI resourceUri = ExperimentConfig.resourceUri(discovery.producerEndpoint());
-            var consumerRequest = contracts.validateConsumerRequest(resourceUri);
+            URI resourceUri = dispatchInvalidRequest
+                    ? discovery.producerEndpoint().resolve(JsonSupport.readResource("experiment-001/scenarios/contract-faults-phase-4-1.0.0.json").required("invalidRecordPath").asText())
+                    : ExperimentConfig.resourceUri(discovery.producerEndpoint());
+            var consumerRequest = contracts.observeRequest("consumer", resourceUri, "application/json");
             telemetry.contract(consumerRequest.role(), consumerRequest.phase(), consumerRequest.result());
 
             HttpRequest.Builder requestBuilder = HttpRequest.newBuilder(resourceUri)
@@ -170,32 +188,25 @@ public final class Consumer {
                 telemetry.inject(io.opentelemetry.context.Context.current(), traceHeaders);
                 traceHeaders.forEach(requestBuilder::header);
                 long producerStart = System.nanoTime();
-                HttpResponse<String> response = httpClient.send(
-                        requestBuilder.build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+                HttpResponse<String> response = sendObserved(requestBuilder.build(), scenarioId, variantId, "producer");
                 telemetry.dependency("producer", response.statusCode() < 400 ? "success" : "error",
                         Duration.ofNanos(System.nanoTime() - producerStart).toMillis());
 
                 String contentType = response.headers().firstValue("Content-Type").orElse("");
+                var validation = contracts.observeResponse("consumer", response.statusCode(), contentType, response.body());
+                telemetry.contract(validation.role(), validation.phase(), validation.result());
+                boolean typeDocumented = response.statusCode() < 400 || contracts.documentedProblemType(response.statusCode(), response.body());
+                boolean contractPassed = validation.passed() && typeDocumented;
                 String problemType = null;
-                boolean contractPassed;
-                if (response.statusCode() == 200) {
-                    if (!contentType.startsWith("application/json")) {
-                        throw new IllegalStateException("Producer returned the wrong success media type");
-                    }
-                    var validation = contracts.validateConsumerResponse(response.body());
-                    telemetry.contract(validation.role(), validation.phase(), validation.result());
-                    contractPassed = validation.passed();
-                } else {
-                    if (!contentType.startsWith("application/problem+json")) {
-                        throw new IllegalStateException("Producer returned the wrong error media type");
-                    }
-                    var validation = contracts.validateConsumerError(response.statusCode(), response.body());
-                    telemetry.contract(validation.role(), validation.phase(), validation.result());
-                    contractPassed = validation.passed();
-                    problemType = JsonSupport.MAPPER.readTree(response.body())
-                            .required("type").textValue();
-                }
-                telemetry.endAndExport(span, response.statusCode() < 400);
+                if (response.statusCode() >= 400 && contentType.startsWith("application/problem+json"))
+                    problemType = JsonSupport.MAPPER.readTree(response.body()).path("type").asText();
+                if (!contractPassed) telemetry.decision("consumer.contract-response", "contract_validation", "deny",
+                        response.statusCode() == 200 ? "invalid-response" : "undocumented-error");
+                if (observeFaults) PhaseFourEvents.record(runtimeRoot, runId,
+                        scenarioId, variantId, "client-response", Map.of("httpStatus", response.statusCode(),
+                                "contractPassed", contractPassed, "internalDetailAbsent", internalDetailAbsent(response.body()),
+                                "mediaType", contentType, "problemTypeDocumented", typeDocumented));
+                telemetry.endAndExport(span, response.statusCode() < 400 && contractPassed);
                 return new ResourceResponse(
                         response.statusCode(),
                         response.headers().firstValue("WWW-Authenticate").orElse(null),
@@ -207,6 +218,8 @@ public final class Consumer {
                 telemetry.endAndExport(span, false);
                 throw e;
             }
+        } catch (DependencyFailure e) {
+            throw e;
         } catch (Exception e) {
             throw new IllegalStateException("Direct resource call failed at a protected checkpoint", e);
         }
@@ -253,8 +266,7 @@ public final class Consumer {
                     .register("dpop_proof", tokenProof.serialize());
             request.header("DPoP", tokenProof.serialize());
         }
-        HttpResponse<String> response = httpClient.send(
-                request.build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        HttpResponse<String> response = sendObserved(request.build(), scenarioId, variantId, "authorization-server");
         if (response.statusCode() != 200) {
             throw new TokenRequestDenied(response.statusCode());
         }
@@ -264,6 +276,59 @@ public final class Consumer {
         }
         return new IssuedToken(json.required("access_token").textValue(), tokenKind,
                 Instant.now(), json.required("expires_in").intValue(), scope);
+    }
+
+    private HttpResponse<String> sendObserved(HttpRequest request, String scenario, String variant,
+                                               String dependency) throws Exception {
+        if (!observeFaults) return httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        PhaseFourEvents.record(runtimeRoot, runId, scenario, variant,
+                "client-attempt", Map.of("dependency", dependency, "attempts", 1));
+        long start = System.nanoTime();
+        String outcome = "success";
+        try {
+            var response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            if (response.statusCode() == 503) { outcome = "unavailable"; throw new DependencyFailure(dependency, outcome); }
+            return response;
+        } catch (java.net.http.HttpTimeoutException e) {
+            outcome = "timeout";
+            throw new DependencyFailure(dependency, outcome);
+        } catch (java.io.IOException e) {
+            outcome = "transport-error";
+            throw new DependencyFailure(dependency, outcome);
+        } finally {
+            long elapsed = (System.nanoTime() - start) / 1_000_000;
+            PhaseFourEvents.record(runtimeRoot, runId, scenario, variant,
+                    "client-completion", Map.of("dependency", dependency, "result", outcome,
+                            "durationMillis", elapsed, "timeoutMillis", 300, "retryBudgetMillis", 350, "attempts", 1,
+                            "failureLocation", "consumer.http." + (dependency.equals("producer") ? "producer" : "token")));
+            if (!outcome.equals("success")) try (var telemetry = new TelemetryRecorder(runtimeRoot, runId, scenario, variant, "consumer")) {
+                telemetry.dependency(dependency, outcome, elapsed);
+                telemetry.decision("consumer.dependency." + (dependency.equals("producer") ? "producer" : "token"),
+                        "dependency_failure", "deny", outcome);
+            }
+        }
+    }
+
+    private boolean internalDetailAbsent(String body) throws Exception {
+        var json = JsonSupport.MAPPER.readTree(body);
+        if (json.has("detail") || json.has("stackTrace")) return false;
+        for (String line : java.nio.file.Files.readAllLines(runtimeRoot.resolve("private/canaries.jsonl"))) {
+            var canary = JsonSupport.MAPPER.readTree(line);
+            if (canary.path("type").asText().equals("sensitive_claim")
+                    && body.contains(canary.path("value").asText())) return false;
+        }
+        return true;
+    }
+
+    public static final class DependencyFailure extends RuntimeException {
+        private final String dependency;
+        private final String reason;
+        DependencyFailure(String dependency, String reason) {
+            super("Dependency failed: " + dependency + "/" + reason);
+            this.dependency = dependency; this.reason = reason;
+        }
+        public String dependency() { return dependency; }
+        public String reason() { return reason; }
     }
 
     private static String formEncode(Map<String, List<String>> form) {

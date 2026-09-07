@@ -1,0 +1,259 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "runId",
+    "scenarioId",
+    "variantId",
+    "kind",
+    "atEpochMillis"
+  ],
+  "properties": {
+    "runId": {
+      "type": "string"
+    },
+    "scenarioId": {
+      "type": "string"
+    },
+    "variantId": {
+      "type": "string"
+    },
+    "kind": {
+      "enum": [
+        "binding",
+        "client-attempt",
+        "client-completion",
+        "client-response",
+        "server-arrival",
+        "server-completion",
+        "business-operation",
+        "finalized",
+        "drained"
+      ]
+    },
+    "dependency": {
+      "type": "string"
+    },
+    "result": {
+      "type": "string"
+    },
+    "fault": {
+      "type": "string"
+    },
+    "mediaType": {
+      "type": "string"
+    },
+    "beforeSha256": {
+      "type": "string"
+    },
+    "afterSha256": {
+      "type": "string"
+    },
+    "offeredVersion": {
+      "type": "string"
+    },
+    "boundVersion": {
+      "type": "string"
+    },
+    "contractSha256": {
+      "type": "string"
+    },
+    "failureLocation": {
+      "type": "string"
+    },
+    "atEpochMillis": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "durationMillis": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "timeoutMillis": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "retryBudgetMillis": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "attempts": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "httpStatus": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "scenarioDurationMillis": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "contractPassed": {
+      "type": "boolean"
+    },
+    "internalDetailAbsent": {
+      "type": "boolean"
+    },
+    "hostLoadAverage": {
+      "type": "number"
+    },
+    "problemTypeDocumented": {
+      "type": "boolean"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "binding"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "offeredVersion",
+          "boundVersion",
+          "contractSha256"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "client-attempt"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "dependency",
+          "attempts"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "client-completion"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "dependency",
+          "result",
+          "durationMillis",
+          "timeoutMillis",
+          "retryBudgetMillis",
+          "attempts",
+          "failureLocation"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "client-response"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "httpStatus",
+          "contractPassed",
+          "internalDetailAbsent",
+          "mediaType",
+          "problemTypeDocumented"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "server-arrival"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "dependency",
+          "durationMillis",
+          "result",
+          "fault"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "server-completion"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "dependency",
+          "durationMillis",
+          "result",
+          "fault"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "business-operation"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "dependency",
+          "durationMillis",
+          "result",
+          "fault"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "finalized"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "beforeSha256"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "drained"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "beforeSha256",
+          "afterSha256",
+          "scenarioDurationMillis",
+          "hostLoadAverage"
+        ]
+      }
+    }
+  ]
+}

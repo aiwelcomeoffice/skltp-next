@@ -1,0 +1,161 @@
+{
+  "version": "1.0.0",
+  "status": "experimental",
+  "variants": [
+    {
+      "scenarioId": "E001-CON-002",
+      "variantId": "wrong-contract-version",
+      "expected": "deny",
+      "terminalCheckpoint": "consumer.contract-binding",
+      "reason": "wrong-contract-version",
+      "asCalls": 0,
+      "producerCalls": 0,
+      "businessOperations": 0,
+      "contracts": [
+        "binding/version/denied"
+      ],
+      "httpStatus": null,
+      "fault": "NONE",
+      "dependency": null
+    },
+    {
+      "scenarioId": "E001-CON-002",
+      "variantId": "invalid-request",
+      "expected": "deny",
+      "terminalCheckpoint": "producer.contract-request",
+      "reason": "invalid-request",
+      "asCalls": 1,
+      "producerCalls": 1,
+      "businessOperations": 0,
+      "contracts": [
+        "consumer/request/denied",
+        "provider/request/denied",
+        "provider/response/pass",
+        "consumer/response/pass"
+      ],
+      "httpStatus": 404,
+      "fault": "NONE",
+      "dependency": null
+    },
+    {
+      "scenarioId": "E001-CON-002",
+      "variantId": "invalid-response",
+      "expected": "deny",
+      "terminalCheckpoint": "consumer.contract-response",
+      "reason": "invalid-response",
+      "asCalls": 1,
+      "producerCalls": 1,
+      "businessOperations": 1,
+      "contracts": [
+        "consumer/request/pass",
+        "provider/request/pass",
+        "provider/response/denied",
+        "consumer/response/denied"
+      ],
+      "httpStatus": 200,
+      "fault": "INVALID_RESPONSE",
+      "dependency": null
+    },
+    {
+      "scenarioId": "E001-CON-002",
+      "variantId": "undocumented-error",
+      "expected": "deny",
+      "terminalCheckpoint": "consumer.contract-response",
+      "reason": "undocumented-error",
+      "asCalls": 1,
+      "producerCalls": 1,
+      "businessOperations": 0,
+      "contracts": [
+        "consumer/request/pass",
+        "provider/request/pass",
+        "provider/response/denied",
+        "consumer/response/denied"
+      ],
+      "httpStatus": 418,
+      "fault": "UNDOCUMENTED_ERROR",
+      "dependency": null
+    },
+    {
+      "scenarioId": "E001-CON-002",
+      "variantId": "problem-details-internal-detail",
+      "expected": "deny",
+      "terminalCheckpoint": "producer.problem-details",
+      "reason": "internal-detail-blocked",
+      "asCalls": 1,
+      "producerCalls": 1,
+      "businessOperations": 0,
+      "contracts": [
+        "consumer/request/pass",
+        "provider/request/pass",
+        "provider/problem-candidate/denied",
+        "provider/response/pass",
+        "consumer/response/pass"
+      ],
+      "httpStatus": 403,
+      "fault": "INTERNAL_DETAIL",
+      "dependency": null
+    },
+    {
+      "scenarioId": "E001-DEP-001",
+      "variantId": "token-slow",
+      "expected": "deny",
+      "terminalCheckpoint": "consumer.dependency.token",
+      "reason": "timeout",
+      "asCalls": 1,
+      "producerCalls": 0,
+      "businessOperations": 0,
+      "contracts": [],
+      "httpStatus": null,
+      "fault": "SLOW",
+      "dependency": "authorization-server"
+    },
+    {
+      "scenarioId": "E001-DEP-001",
+      "variantId": "token-unavailable",
+      "expected": "deny",
+      "terminalCheckpoint": "consumer.dependency.token",
+      "reason": "unavailable",
+      "asCalls": 1,
+      "producerCalls": 0,
+      "businessOperations": 0,
+      "contracts": [],
+      "httpStatus": null,
+      "fault": "UNAVAILABLE",
+      "dependency": "authorization-server"
+    },
+    {
+      "scenarioId": "E001-DEP-001",
+      "variantId": "producer-slow",
+      "expected": "deny",
+      "terminalCheckpoint": "consumer.dependency.producer",
+      "reason": "timeout",
+      "asCalls": 1,
+      "producerCalls": 1,
+      "businessOperations": 1,
+      "contracts": [
+        "consumer/request/pass",
+        "provider/request/pass",
+        "provider/response/pass"
+      ],
+      "httpStatus": null,
+      "fault": "SLOW",
+      "dependency": "producer"
+    },
+    {
+      "scenarioId": "E001-DEP-001",
+      "variantId": "producer-unavailable",
+      "expected": "deny",
+      "terminalCheckpoint": "consumer.dependency.producer",
+      "reason": "unavailable",
+      "asCalls": 1,
+      "producerCalls": 1,
+      "businessOperations": 0,
+      "contracts": [
+        "consumer/request/pass"
+      ],
+      "httpStatus": null,
+      "fault": "UNAVAILABLE",
+      "dependency": "producer"
+    }
+  ]
+}

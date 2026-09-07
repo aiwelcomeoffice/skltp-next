@@ -67,7 +67,7 @@ public final class ContractValidators {
         if (!"readSyntheticRecord".equals(operation.getOperationId())) {
             throw new IllegalArgumentException("Stable operationId is required");
         }
-        if (!"1.0.0".equals(api.getInfo().getVersion())) {
+        if (!bindVersion(api.getInfo().getVersion()).passed()) {
             throw new IllegalArgumentException("Contract version is not release-bound");
         }
         if (api.getComponents() == null || api.getComponents().getSecuritySchemes() == null
@@ -151,6 +151,45 @@ public final class ContractValidators {
             }
             return new ValidationRecord(role, "response", "denied");
         }
+    }
+
+    /** Validates observed HTTP values; a rejection is data, never a token failure. */
+    public ValidationRecord observeRequest(String role, URI uri, String accept) {
+        var builder = new DefaultRequest.Builder(uri.toString(), Request.Method.GET);
+        if (accept != null) builder.header("Accept", accept);
+        try {
+            kappaValidator.validate(builder.build());
+            return new ValidationRecord(role, "request", "pass");
+        } catch (ValidationException e) {
+            return new ValidationRecord(role, "request", "denied");
+        }
+    }
+
+    public ValidationRecord observeResponse(String role, int status, String mediaType, String body) {
+        var result = validateResponse(role, status, mediaType, body, false);
+        return new ValidationRecord(role, "response",
+                "accepted-negative-fixture".equals(result.result()) ? "pass" : "denied");
+    }
+
+    /** Local documented problem-type lookup, separate from Kappa's HTTP/schema validation. */
+    public boolean documentedProblemType(int status, String body) {
+        try {
+            String type = JsonSupport.MAPPER.readTree(body).path("type").asText();
+            if (status == 404 && type.equals("urn:skltp-next:experiment-001:error:not-found")) return true;
+            for (var oracle : JsonSupport.readResource("experiment-001/profiles/security-errors-phase-2-1.0.0.json").required("errorOracles"))
+                if (oracle.path("httpStatus").asInt() == status && oracle.path("problemType").asText().equals(type)) return true;
+            return false;
+        } catch (java.io.IOException e) { return false; }
+    }
+
+    public ValidationRecord bindVersion(String offeredVersion) {
+        new se.skltpnext.experiment001.release.ReleaseValidator().validate();
+        String pinnedVersion = null;
+        for (var reference : JsonSupport.readResource("experiment-001/release/index-1.0.0.json").required("references"))
+            if (reference.path("type").asText().equals("contract")) pinnedVersion = reference.required("version").asText();
+        String actualVersion = JsonSupport.readResource(CONTRACT_RESOURCE).required("info").required("version").asText();
+        return new ValidationRecord("binding", "version", actualVersion.equals(pinnedVersion)
+                && actualVersion.equals(offeredVersion) ? "pass" : "denied");
     }
 
     public static SwaggerGateResult validateSwaggerFixture(URL url, boolean expectedValid) {

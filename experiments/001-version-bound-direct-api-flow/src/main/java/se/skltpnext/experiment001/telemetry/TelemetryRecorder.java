@@ -189,7 +189,7 @@ public final class TelemetryRecorder implements AutoCloseable {
                 "phase", phase,
                 "contractId", ExperimentConfig.CONTRACT_ID,
                 "contractVersion", ExperimentConfig.CONTRACT_VERSION,
-                "validator", "kappa-2.0.5",
+                "validator", role.equals("binding") ? "release-contract-binding-1.0.0" : "kappa-2.0.5",
                 "result", result));
     }
 

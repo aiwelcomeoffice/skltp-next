@@ -30,7 +30,14 @@ public final class ConformanceGates {
         boolean jacksonCompatible = "2.22.0".equals(jacksonVersion);
         boolean swaggerPass = "3.1.2".equals(structure.openApiVersion())
                 && swaggerPositive.passed() && swaggerNegative.passed();
-        boolean kappaPass = kappaPositive && kappaNegativeRequest
+        se.skltpnext.experiment001.evidence.PhaseFourEvidence.catalog();
+        boolean phaseFour = contracts.bindVersion("1.0.0").passed() && !contracts.bindVersion("2.0.0").passed();
+        for (String role : java.util.List.of("provider", "consumer")) {
+            phaseFour &= !contracts.observeRequest(role, URI.create("https://localhost/synthetic-records/invalid-record"), "application/json").passed()
+                    && !contracts.observeResponse(role, 418, "application/problem+json", "{\"type\":\"urn:test:error\",\"title\":\"Synthetic error\",\"status\":418}").passed()
+                    && !contracts.observeResponse(role, 403, "application/problem+json", "{\"type\":\"urn:test:error\",\"title\":\"Forbidden\",\"status\":403,\"detail\":\"synthetic-internal-marker\"}").passed();
+        }
+        boolean kappaPass = phaseFour && kappaPositive && kappaNegativeRequest
                 && kappaNegativeResponse && jacksonCompatible;
         boolean all = nimbus.passed() && swaggerPass && kappaPass;
         return new GateReport(nimbus, swaggerPass, swaggerPositive.passed(),

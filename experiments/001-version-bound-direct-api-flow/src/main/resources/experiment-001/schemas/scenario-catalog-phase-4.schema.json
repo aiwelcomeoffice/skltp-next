@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "status",
+    "variants"
+  ],
+  "properties": {
+    "version": {
+      "const": "1.0.0"
+    },
+    "status": {
+      "const": "experimental"
+    },
+    "variants": {
+      "type": "array",
+      "minItems": 9,
+      "maxItems": 9,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "scenarioId",
+          "variantId",
+          "expected",
+          "terminalCheckpoint",
+          "reason",
+          "fault",
+          "asCalls",
+          "producerCalls",
+          "businessOperations",
+          "contracts",
+          "httpStatus",
+          "dependency"
+        ],
+        "properties": {
+          "scenarioId": {
+            "type": "string"
+          },
+          "variantId": {
+            "type": "string"
+          },
+          "expected": {
+            "type": "string"
+          },
+          "terminalCheckpoint": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "fault": {
+            "type": "string"
+          },
+          "asCalls": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "producerCalls": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "businessOperations": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "contracts": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "httpStatus": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "dependency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

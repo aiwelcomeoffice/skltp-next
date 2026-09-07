@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:skltp-next:experiment-001:schema:scenario-result-phase-4:1.0.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "runId",
+    "scenarioId",
+    "variantId",
+    "releaseId",
+    "releaseVersion",
+    "parameterSetId",
+    "expected",
+    "actual",
+    "status",
+    "checkpoints",
+    "telemetryRef",
+    "auditRef",
+    "contractValidation",
+    "leakageValidation",
+    "terminalCheckpoint",
+    "reason",
+    "observationsRef"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "4.0.0"
+    },
+    "runId": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9._-]{1,64}$"
+    },
+    "scenarioId": {
+      "enum": [
+        "E001-CON-002",
+        "E001-DEP-001"
+      ]
+    },
+    "variantId": {
+      "enum": [
+        "wrong-contract-version",
+        "invalid-request",
+        "invalid-response",
+        "undocumented-error",
+        "problem-details-internal-detail",
+        "token-slow",
+        "token-unavailable",
+        "producer-slow",
+        "producer-unavailable"
+      ]
+    },
+    "releaseId": {
+      "const": "E001-RELEASE"
+    },
+    "releaseVersion": {
+      "const": "1.0.0"
+    },
+    "parameterSetId": {
+      "const": "E001-PARAMS-1.0.0"
+    },
+    "expected": {
+      "enum": [
+        "allow",
+        "deny"
+      ]
+    },
+    "actual": {
+      "enum": [
+        "allow",
+        "deny",
+        "harness-error"
+      ]
+    },
+    "status": {
+      "enum": [
+        "pass",
+        "fail",
+        "inconclusive"
+      ]
+    },
+    "checkpoints": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    },
+    "telemetryRef": {
+      "type": "string"
+    },
+    "auditRef": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "contractValidation": {
+      "enum": [
+        "pass",
+        "not-applicable",
+        "denied"
+      ]
+    },
+    "leakageValidation": {
+      "const": "pending-collection"
+    },
+    "terminalCheckpoint": {
+      "type": "string"
+    },
+    "reason": {
+      "type": "string"
+    },
+    "observationsRef": {
+      "const": "phase-4/observations.jsonl"
+    }
+  }
+}

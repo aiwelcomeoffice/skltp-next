@@ -1,5 +1,6 @@
 package se.skltpnext.experiment001.cli;
 
+import se.skltpnext.experiment001.dependency.DoubleFault;
 import com.sun.net.httpserver.HttpsConfigurator;
 import com.sun.net.httpserver.HttpsServer;
 import se.skltpnext.experiment001.ExperimentConfig;
@@ -126,6 +127,14 @@ public final class RuntimeEnvironment {
                 producer.setLocalPolicyDecision(ProducerDouble.LocalPolicyDecision.DENY);
                 ready(exchange, "producer-policy-deny");
             });
+            authorizationServer.createContext("/__fault/", exchange -> {
+                authorization.setFault(faultValue(exchange)); ready(exchange, "authorization-fault-configured");
+            });
+            producerServer.createContext("/__fault/", exchange -> {
+                producer.setFault(faultValue(exchange)); ready(exchange, "producer-fault-configured");
+            });
+            authorizationServer.createContext("/__drain", exchange -> { authorization.drain(); ready(exchange, "authorization-drained"); });
+            producerServer.createContext("/__drain", exchange -> { producer.drain(); ready(exchange, "producer-drained"); });
             authorizationServer.start();
             producerServer.start();
             secondServer.start();
@@ -157,6 +166,12 @@ public final class RuntimeEnvironment {
             }
             throw new IllegalStateException("Experiment environment failed", e);
         }
+    }
+
+    private static DoubleFault faultValue(com.sun.net.httpserver.HttpExchange exchange) {
+        if (!"POST".equals(exchange.getRequestMethod())) throw new IllegalArgumentException("Control requires POST");
+        return DoubleFault.valueOf(
+                exchange.getRequestURI().getPath().substring("/__fault/".length()));
     }
 
     public static EnvironmentInfo read(Path runtimeRoot) {
