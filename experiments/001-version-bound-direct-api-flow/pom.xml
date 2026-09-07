@@ -7,7 +7,7 @@
   <groupId>se.skltpnext</groupId>
   <artifactId>experiment-001-version-bound-direct-api-flow</artifactId>
   <version>1.0.0-SNAPSHOT</version>
-  <name>SKLTP Next Experiment 001 - Phases 1-2</name>
+  <name>SKLTP Next Experiment 001 - Phases 1-3</name>
   <description>Isolated experimental harness for the verified Phase 1 and Phase 2 slices.</description>
 
   <properties>

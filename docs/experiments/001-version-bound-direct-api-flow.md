@@ -1,8 +1,8 @@
 # Experiment 001 – Versionsbundet direkt M2M-API-flöde
 
 - **Status:** experimental
-- **Senast sakgranskad:** 2026-08-22
-- **Implementation:** Fas 1 verifierad 2026-08-18 och Fas 2 verifierad 2026-08-22; senare faser inte påbörjade
+- **Senast sakgranskad:** 2026-08-22; implementationsstatus uppdaterad 2026-09-07
+- **Implementation:** Fas 1 verifierad 2026-08-18, Fas 2 verifierad 2026-08-22 och Fas 3 verifierad 2026-09-07; Fas 4–7 inte påbörjade
 - **Dokumenttyp:** produkt- och implementationsneutral experimentspecifikation
 - **Styrande underlag:** [Syntes 001](../architecture/001-research-synthesis-and-first-experiment-hypothesis.md)
 
@@ -19,7 +19,8 @@ OAuth-, DPoP- eller kontraktsexperiment.
 
 Implementationsstatusen ovan ändrar inte de normativa scenariodefinitionerna.
 Verifieringsresultaten finns i [Fas 1-rapporten](001-version-bound-direct-api-flow-phase-1-report.md)
-och [Fas 2-rapporten](001-version-bound-direct-api-flow-phase-2-report.md);
+[Fas 2-rapporten](001-version-bound-direct-api-flow-phase-2-report.md)
+och [Fas 3-rapporten](001-version-bound-direct-api-flow-phase-3-report.md);
 hela Experiment 001 är ännu inte klassificerat.
 
 ## Läsregel för källstatus och kravord
@@ -793,9 +794,10 @@ Följande ska fortfarande hållas öppna efter denna specifikation:
 
 ### Rekommenderad nästa enda arbetsuppgift
 
-Implementationsplanen finns nu i
-[Implementationsplan för Experiment 001](001-version-bound-direct-api-flow-implementation-plan.md),
-och dess Fas 1 och Fas 2 är verifierade. Nästa enda tillåtna
-implementationsuppgift är planens **Fas 3 – release-, discovery-, metadata-
-och lifecyclefel**. Den statusändringen utökar inte experimentets scope och
-påbörjar inte Fas 3 i denna arbetskopia.
+[Implementationsplanens](001-version-bound-direct-api-flow-implementation-plan.md)
+Fas 1–3 är verifierade. Se [Fas 3-slutrapporten](001-version-bound-direct-api-flow-phase-3-report.md)
+för samtliga 35 Fas 3-kombinationer, 55/55 regressioner, evidenspaket och
+lokala begränsningar. Nästa enda steg är att granska och avgränsa planens
+**Fas 4 – kontrakts- och dependencyfel**. Fas 4–7 är inte påbörjade och
+hela Experiment 001 är ännu inte klassificerat. Ursprungliga scenarier och
+orakel ändras inte av denna statusuppdatering.

@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "runId",
+    "scenarioId",
+    "variantId",
+    "component",
+    "revision",
+    "ageMillis",
+    "ttlMillis",
+    "maxStalenessMillis",
+    "propagationMillis",
+    "authorityRef",
+    "keyRole",
+    "activatedAt",
+    "observedAt",
+    "reason",
+    "family",
+    "result",
+    "cacheState",
+    "fetchedAt",
+    "cacheAgeMillis"
+  ],
+  "properties": {
+    "runId": {
+      "type": "string"
+    },
+    "scenarioId": {
+      "type": "string"
+    },
+    "variantId": {
+      "type": "string"
+    },
+    "component": {
+      "type": "string"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "ageMillis": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "ttlMillis": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "maxStalenessMillis": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "propagationMillis": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "authorityRef": {
+      "type": "string"
+    },
+    "keyRole": {
+      "type": "string"
+    },
+    "activatedAt": {
+      "type": "string"
+    },
+    "observedAt": {
+      "type": "string"
+    },
+    "reason": {
+      "type": "string"
+    },
+    "family": {
+      "enum": [
+        "service",
+        "membership",
+        "iam"
+      ]
+    },
+    "result": {
+      "enum": [
+        "allow",
+        "deny"
+      ]
+    },
+    "cacheState": {
+      "enum": [
+        "miss",
+        "hit",
+        "invalidated",
+        "revalidated",
+        "source-unavailable"
+      ]
+    },
+    "fetchedAt": {
+      "type": "string"
+    },
+    "cacheAgeMillis": {
+      "type": "integer",
+      "minimum": 0
+    }
+  }
+}

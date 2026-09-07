@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "auditRecordId",
+    "runId",
+    "scenarioId",
+    "variantId",
+    "decidingParty",
+    "organizationRef",
+    "systemRef",
+    "clientRef",
+    "releaseVersion",
+    "policyVersion",
+    "checkpoint",
+    "result",
+    "reason"
+  ],
+  "properties": {
+    "auditRecordId": {
+      "type": "string"
+    },
+    "runId": {
+      "type": "string"
+    },
+    "scenarioId": {
+      "type": "string"
+    },
+    "variantId": {
+      "type": "string"
+    },
+    "decidingParty": {
+      "type": "string"
+    },
+    "organizationRef": {
+      "type": "string"
+    },
+    "systemRef": {
+      "type": "string"
+    },
+    "clientRef": {
+      "type": "string"
+    },
+    "releaseVersion": {
+      "type": "string"
+    },
+    "policyVersion": {
+      "type": "string"
+    },
+    "checkpoint": {
+      "type": "string"
+    },
+    "result": {
+      "enum": [
+        "allow",
+        "deny"
+      ]
+    },
+    "reason": {
+      "type": "string"
+    }
+  }
+}

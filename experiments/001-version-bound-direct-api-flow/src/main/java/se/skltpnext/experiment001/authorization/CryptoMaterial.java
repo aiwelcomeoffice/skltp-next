@@ -41,8 +41,21 @@ public record CryptoMaterial(
             writePrivate(privateDir.resolve("dpop.jwk.json"), material.dpopKey);
             JsonSupport.writeJson(publicDir.resolve("metadata.jwk.json"),
                     JsonSupport.MAPPER.readTree(material.metadataKey.toPublicJWK().toJSONString()));
+            for (String family : java.util.List.of("membership", "iam")) {
+                ECKey familyKey = key("metadata-" + family);
+                writePrivate(privateDir.resolve("metadata-" + family + ".jwk.json"), familyKey);
+                JsonSupport.writeJson(publicDir.resolve("metadata-" + family + ".jwk.json"),
+                        JsonSupport.MAPPER.readTree(familyKey.toPublicJWK().toJSONString()));
+            }
+            JsonSupport.writeJson(publicDir.resolve("client-authentication.jwk.json"),
+                    JsonSupport.MAPPER.readTree(material.clientAuthenticationKey.toPublicJWK().toJSONString()));
             CanaryRegistry canaries = new CanaryRegistry(privateDir);
-            canaries.register("private_key", material.clientAuthenticationKey.toJSONString());
+            for (ECKey privateKey : java.util.List.of(material.metadataKey, material.clientAuthenticationKey,
+                    material.authorizationServerSigningKey, material.dpopKey,
+                    metadataSigningKey(runtimeRoot, "membership"), metadataSigningKey(runtimeRoot, "iam"))) {
+                canaries.register("private_key", privateKey.toJSONString());
+                canaries.register("private_key", privateKey.getD().toString());
+            }
             return material;
         } catch (IOException | JOSEException e) {
             throw new IllegalStateException("Cannot generate per-run JOSE material", e);
@@ -56,6 +69,14 @@ public record CryptoMaterial(
                 readKey(privateDir.resolve("client-authentication.jwk.json")),
                 readKey(privateDir.resolve("authorization-server-signing.jwk.json")),
                 readKey(privateDir.resolve("dpop.jwk.json")));
+    }
+
+    public static ECKey metadataSigningKey(Path root, String family) {
+        return switch (family) {
+            case "service" -> readKey(root.resolve("private/metadata.jwk.json"));
+            case "membership", "iam" -> readKey(root.resolve("private/metadata-" + family + ".jwk.json"));
+            default -> throw new IllegalArgumentException("Unknown metadata authority");
+        };
     }
 
     private static ECKey key(String id) throws JOSEException {
@@ -73,6 +94,17 @@ public record CryptoMaterial(
         } catch (IOException | ParseException e) {
             throw new IllegalStateException("Cannot load private runtime key", e);
         }
+    }
+
+    public static Map<String, String> metadataPublicFingerprints(Path root) {
+        Map<String, String> fingerprints = new java.util.TreeMap<>();
+        try {
+            for (String family : java.util.List.of("service", "membership", "iam")) {
+                String file = family.equals("service") ? "metadata" : "metadata-" + family;
+                fingerprints.put("metadata-" + family, readKey(root.resolve("public-trust/" + file + ".jwk.json")).computeThumbprint().toString());
+            }
+            return fingerprints;
+        } catch (JOSEException e) { throw new IllegalStateException("Cannot fingerprint metadata authority", e); }
     }
 
     public Map<String, String> publicFingerprints() {

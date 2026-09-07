@@ -115,6 +115,7 @@ public final class Consumer {
     public IssuedToken obtainToken(String scenarioId, String variantId,
                                    MetadataStores.DiscoveryResult discovery,
                                    TokenKind tokenKind, String scope) {
+        long requestStarted = System.nanoTime();
         try (TelemetryRecorder telemetry = new TelemetryRecorder(
                 runtimeRoot, runId, scenarioId, variantId, "consumer")) {
             long tokenStart = System.nanoTime();
@@ -123,6 +124,11 @@ public final class Consumer {
             telemetry.dependency("authorization-server", "success",
                     Duration.ofNanos(System.nanoTime() - tokenStart).toMillis());
             return token;
+        } catch (TokenRequestDenied e) {
+            try (var telemetry = new TelemetryRecorder(runtimeRoot, runId, scenarioId, variantId, "consumer")) {
+                telemetry.dependency("authorization-server", "error", Duration.ofNanos(System.nanoTime() - requestStarted).toMillis());
+            }
+            throw e;
         } catch (Exception e) {
             throw new IllegalStateException("Token request failed at a protected checkpoint", e);
         }
@@ -250,7 +256,7 @@ public final class Consumer {
         HttpResponse<String> response = httpClient.send(
                 request.build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
         if (response.statusCode() != 200) {
-            throw new IllegalStateException("Authorization server denied profiled token request");
+            throw new TokenRequestDenied(response.statusCode());
         }
         JsonNode json = JsonSupport.MAPPER.readTree(response.body());
         if (!tokenKind.tokenType.equals(json.required("token_type").textValue())) {
@@ -266,6 +272,12 @@ public final class Consumer {
                 URLEncoder.encode(key, StandardCharsets.UTF_8) + "="
                         + URLEncoder.encode(value, StandardCharsets.UTF_8))));
         return String.join("&", pairs);
+    }
+
+    public static final class TokenRequestDenied extends RuntimeException {
+        private final int status;
+        TokenRequestDenied(int status) { super("Token request denied"); this.status = status; }
+        public int status() { return status; }
     }
 
     public record FlowResult(

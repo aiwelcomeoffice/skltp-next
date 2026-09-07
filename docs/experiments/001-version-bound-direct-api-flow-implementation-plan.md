@@ -3,7 +3,7 @@
 - **Status:** experimental
 - **Datum:** 2026-08-17
 - **Senast uppdaterad:** 2026-08-22
-- **Implementation:** Fas 1 verifierad 2026-08-18; Fas 2 verifierad 2026-08-22; Fas 3 delvis verifierad (releasefel, se [delrapport](001-version-bound-direct-api-flow-phase-3-release-report.md)); Fas 4–7 inte påbörjade
+- **Implementation:** Fas 1 verifierad 2026-08-18; Fas 2 verifierad 2026-08-22; Fas 3 verifierad 2026-09-07 (se [slutrapport](001-version-bound-direct-api-flow-phase-3-report.md)); Fas 4–7 inte påbörjade
 - **Planerar:** [Experiment Specification 001](001-version-bound-direct-api-flow.md)
 - **Styrande syntes:** [Syntes 001](../architecture/001-research-synthesis-and-first-experiment-hypothesis.md)
 - **Beslutsräckvidd:** endast den syntetiska experimentharnessen
@@ -689,7 +689,10 @@ Slutför övriga varianter i `E001-REL-001` och implementera
 `E001-DIS-002`, `E001-DIS-003`, `E001-META-001`, `E001-META-002` och
 `E001-LIFE-001`. Här tillkommer revisionsbyten, typed caches,
 anti-rollback, JWS-mutationsfixtures, revokering, offboarding och
-avpublicering. Alla tidsförlopp drivs av `MutableExperimentClock`.
+avpublicering. Metadataförloppen drivs av `MutableExperimentClock`;
+HTTP-duration använder monotonic tid och OAuth/DPoP bibliotekens verkliga
+klocka. Genomfört 2026-09-07 med begränsningar och evidens i
+[Fas 3-rapporten](001-version-bound-direct-api-flow-phase-3-report.md).
 
 ### Fas 4 – kontrakts- och dependencyfel
 
@@ -964,16 +967,21 @@ Alla externa källor nedan lästes 2026-08-17. Lokala researchdokument
   [HttpClient](https://docs.oracle.com/en/java/javase/25/docs/api/java.net.http/java/net/http/HttpClient.html)
   och [keytool](https://docs.oracle.com/en/java/javase/25/docs/specs/man/keytool.html).
 
-## Rekommenderat nästa enda implementationsteg
+## Implementationsstatus och nästa enda steg
 
-Fas 1 och Fas 2 är verifierade och får inte implementeras på nytt. Resultaten
-finns i [Fas 1-rapporten](001-version-bound-direct-api-flow-phase-1-report.md)
-och [Fas 2-rapporten](001-version-bound-direct-api-flow-phase-2-report.md).
+Fas 1, Fas 2 och hela Fas 3 är verifierade inom den lokala syntetiska
+harnessen. Se [Fas 1](001-version-bound-direct-api-flow-phase-1-report.md),
+[Fas 2](001-version-bound-direct-api-flow-phase-2-report.md) och den
+[sammanhållna Fas 3-rapporten](001-version-bound-direct-api-flow-phase-3-report.md).
+Fas 3:s 35 kombinationer och hela regressionens 55 kombinationer passerar.
+Slutrapporten dokumenterar cache-/revisionsmodellen, verifierade
+beslutspunkter, evidenskontroller och kravet på lokal Linux-lagring för
+CLI-körningens pinnade tidsgränser. Tidigare
+[release-delrapport](001-version-bound-direct-api-flow-phase-3-release-report.md)
+och [Fas 3b1](001-version-bound-direct-api-flow-phase-3b1-report.md) bevaras
+som historiska observationer.
 
-De tre negativa varianterna i `E001-REL-001` är nu verifierade; se
-[delrapporten](001-version-bound-direct-api-flow-phase-3-release-report.md).
-Nästa implementation är återstående **Fas 3 – discovery-, metadata- och
-lifecyclefel** enligt fasindelningen ovan, avgränsad till
-`E001-DIS-002`, `E001-DIS-003`, `E001-META-001`, `E001-META-002` och
-`E001-LIFE-001`. Inga Fas 4-scenarier, containrar, Kubernetes-, CI- eller
-produktionsmekanismer ingår. Fas 3 som helhet är ännu inte verifierad.
+Nästa enda steg är att granska och avgränsa **Fas 4 – kontrakts- och
+dependencyfel** mot den verifierade harnessen. Fas 4–7 är inte påbörjade;
+hela Experiment 001 är inte klassificerat. Detta statusavsnitt ändrar inte
+fasernas ursprungliga orakel eller innebär ett produktionsbeslut.

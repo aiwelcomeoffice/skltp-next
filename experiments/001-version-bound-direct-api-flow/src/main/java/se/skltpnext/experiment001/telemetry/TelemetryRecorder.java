@@ -149,6 +149,37 @@ public final class TelemetryRecorder implements AutoCloseable {
         writeAllowlisted(runtimeRoot.resolve("events/telemetry/decisions.jsonl"), event, DECISION_FIELDS);
     }
 
+    public void metadata(String family, int revision, long age, long ttl, long max,
+                         String cacheState, String result, String reason,
+                         java.time.Instant activated, java.time.Instant observed, java.time.Instant fetched) {
+        Map<String, Object> event = new java.util.LinkedHashMap<>();
+        event.put("runId", runId); event.put("scenarioId", scenarioId); event.put("variantId", variantId);
+        event.put("component", component); event.put("family", family); event.put("revision", revision);
+        event.put("fetchedAt", fetched.toString());
+        event.put("cacheAgeMillis", java.time.Duration.between(fetched, observed).toMillis());
+        event.put("ageMillis", age); event.put("ttlMillis", ttl); event.put("maxStalenessMillis", max);
+        event.put("cacheState", cacheState); event.put("result", result); event.put("reason", reason);
+        event.put("authorityRef", "metadata-" + family); event.put("keyRole", "metadata-provenance");
+        event.put("activatedAt", activated.toString()); event.put("observedAt", observed.toString());
+        event.put("propagationMillis", java.time.Duration.between(activated, observed).toMillis());
+        schemaEvent("metadata", event);
+    }
+
+    public void discovery(int count, String result, String reason, String endpointId, int revision) {
+        Map<String, Object> event = new java.util.LinkedHashMap<>();
+        event.put("runId", runId); event.put("scenarioId", scenarioId); event.put("variantId", variantId);
+        event.put("component", component); event.put("lookupRef", "E001-ORG-B-API-1.0.0-LOCAL");
+        event.put("candidateCount", count); event.put("result", result); event.put("reason", reason);
+        event.put("endpointId", endpointId); event.put("endpointRevision", revision);
+        schemaEvent("discovery", event);
+    }
+
+    private void schemaEvent(String channel, Map<String, Object> event) {
+        JsonSupport.validateResource("experiment-001/schemas/" + channel + "-event-phase-3.schema.json",
+                JsonSupport.MAPPER.valueToTree(event), channel + " event");
+        JsonSupport.appendJsonLine(runtimeRoot.resolve("events/telemetry/" + channel + ".jsonl"), event);
+    }
+
     public void contract(String role, String phase, String result) {
         JsonSupport.appendJsonLine(runtimeRoot.resolve("events/contract/validations.jsonl"), Map.of(
                 "runId", runId,
@@ -163,14 +194,14 @@ public final class TelemetryRecorder implements AutoCloseable {
     }
 
     public void dependency(String dependency, String result, long durationMillis) {
-        JsonSupport.appendJsonLine(runtimeRoot.resolve("events/telemetry/dependencies.jsonl"), Map.of(
-                "runId", runId,
-                "scenarioId", scenarioId,
-                "variantId", variantId,
-                "dependency", dependency,
-                "attempts", 1,
-                "result", result,
-                "durationBucket", durationMillis < 100 ? "under-100ms" : "100ms-or-more"));
+        Map<String, Object> event = new java.util.LinkedHashMap<>();
+        event.put("runId", runId); event.put("scenarioId", scenarioId); event.put("variantId", variantId);
+        event.put("dependency", dependency); event.put("attempts", 1); event.put("result", result);
+        event.put("durationBucket", durationMillis < 100 ? "under-100ms" : "100ms-or-more");
+        event.put("durationMillis", durationMillis);
+        event.put("timeoutMillis", Set.of("service", "membership", "iam").contains(dependency) ? 100 : 300);
+        event.put("retryBudgetMillis", 350);
+        JsonSupport.appendJsonLine(runtimeRoot.resolve("events/telemetry/dependencies.jsonl"), event);
     }
 
     public void network(String sender, String receiver, String listenerId,
@@ -198,7 +229,7 @@ public final class TelemetryRecorder implements AutoCloseable {
         record.put("runId", runId);
         record.put("scenarioId", scenarioId);
         record.put("variantId", variantId);
-        record.put("decidingParty", "producer-b");
+        record.put("decidingParty", component.equals("producer") ? "producer-b" : component);
         record.put("organizationRef", "ORG_A");
         record.put("systemRef", "SYSTEM_A");
         record.put("clientRef", "CLIENT_A");
@@ -207,6 +238,7 @@ public final class TelemetryRecorder implements AutoCloseable {
         record.put("checkpoint", checkpoint);
         record.put("result", result);
         record.put("reason", reason);
+        JsonSupport.validateResource("experiment-001/schemas/audit-event-phase-3.schema.json", JsonSupport.MAPPER.valueToTree(record), "audit");
         JsonSupport.appendJsonLine(runtimeRoot.resolve("events/audit/records.jsonl"), record);
         return auditId;
     }

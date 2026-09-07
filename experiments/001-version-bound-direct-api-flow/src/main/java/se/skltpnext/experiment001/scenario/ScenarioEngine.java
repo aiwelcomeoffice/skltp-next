@@ -62,11 +62,12 @@ public final class ScenarioEngine {
                 case "E001-CON-001/baseline" -> flowScenario(scenarioId, variantId, true);
                 case "E001-REL-001/missing-ref", "E001-REL-001/ambiguous-ref", "E001-REL-001/digest-mutation" ->
                         releaseNegativeScenario(scenarioId, variantId);
-                default -> new PhaseTwoScenarioRunner(runtimeRoot, runId)
-                        .run(scenarioId, variantId);
+                default -> ExperimentConfig.PHASE_3_VARIANTS.contains(key)
+                        ? new PhaseThreeScenarioRunner(runtimeRoot, runId).run(scenarioId, variantId)
+                        : new PhaseTwoScenarioRunner(runtimeRoot, runId).run(scenarioId, variantId);
             };
             if (ExperimentConfig.PHASE_3_VARIANTS.contains(key)) {
-                writeReleaseNegativeResult(result);
+                writePhaseThreeResult(result);
             } else {
                 writeResult(result);
             }
@@ -80,7 +81,7 @@ public final class ScenarioEngine {
                     List.of("safe-evidence-finalization"), null,
                     "not-applicable", "pending-collection", phaseTwo);
             if (ExperimentConfig.PHASE_3_VARIANTS.contains(key)) {
-                writeReleaseNegativeResult(inconclusive);
+                writePhaseThreeResult(inconclusive);
             } else {
                 writeResult(inconclusive);
             }
@@ -204,6 +205,8 @@ public final class ScenarioEngine {
     }
 
     public void reset() {
+        PhaseThreeScenarioRunner.restoreMetadata(runtimeRoot, environment);
+        postReset(environment.secondProducerEndpoint().resolve("/__reset"));
         postReset(environment.authorizationServerEndpoint().resolve("/__reset"));
         postReset(environment.producerEndpoint().resolve("/__reset"));
     }
@@ -215,6 +218,9 @@ public final class ScenarioEngine {
         }
         reset();
         for (String channel : List.of(
+                "events/telemetry/metadata.jsonl",
+                "events/telemetry/discovery.jsonl",
+                "events/telemetry/transitions.jsonl",
                 "events/telemetry/spans.jsonl",
                 "events/telemetry/decisions.jsonl",
                 "events/telemetry/dependencies.jsonl",
@@ -377,29 +383,36 @@ public final class ScenarioEngine {
         return location.getClassName() + "#" + location.getMethodName() + ":" + location.getLineNumber();
     }
 
-    private void writeReleaseNegativeResult(ScenarioResult result) {
+    private void writePhaseThreeResult(ScenarioResult result) {
         ObjectNode json = JsonSupport.MAPPER.createObjectNode();
-        json.put("schemaVersion", "3.0.0");
+        json.put("schemaVersion", "3.1.0");
         json.put("runId", runId);
         json.put("scenarioId", result.scenarioId());
         json.put("variantId", result.variantId());
         json.put("releaseId", ExperimentConfig.RELEASE_ID);
         json.put("releaseVersion", ExperimentConfig.RELEASE_VERSION);
         json.put("parameterSetId", ExperimentConfig.PARAMETER_SET_ID);
-        json.put("expected", "deny");
+        json.put("expected", result.scenarioId().equals("E001-DIS-002") ? "allow" : "deny");
         json.put("actual", result.actual());
         json.put("status", result.status());
+        var decisions = jsonLines(runtimeRoot.resolve("events/telemetry/decisions.jsonl"), result.scenarioId(), result.variantId());
+        json.put("terminalCheckpoint", decisions.isEmpty() ? "safe-evidence-finalization" : decisions.getLast().path("checkpoint").asText());
+        json.put("reason", decisions.isEmpty() ? "harness-error" : decisions.getLast().path("reason").asText());
+        json.put("metadataEvidenceRef", "telemetry/metadata.jsonl");
+        json.put("discoveryEvidenceRef", "telemetry/discovery.jsonl");
+        json.put("transitionEvidenceRef", "telemetry/transitions.jsonl");
         var checkpoints = json.putArray("checkpoints");
         result.checkpoints().forEach(checkpoints::add);
         json.put("telemetryRef", "telemetry/decisions.jsonl");
-        if (result.auditRef() == null) {
+        String audit = latestAuditRef(result.scenarioId(), result.variantId());
+        if (audit == null) {
             json.putNull("auditRef");
         } else {
-            json.put("auditRef", result.auditRef());
+            json.put("auditRef", audit);
         }
         json.put("contractValidation", result.contractValidation());
         json.put("leakageValidation", result.leakageValidation());
-        JsonSupport.validate(JsonSupport.readResource("experiment-001/schemas/scenario-result-phase-3.schema.json"),
+        JsonSupport.validate(JsonSupport.readResource("experiment-001/schemas/scenario-result-phase-3-1.1.0.schema.json"),
                 json, "scenario result");
         JsonSupport.writeJson(runtimeRoot.resolve("results")
                 .resolve(result.scenarioId() + "--" + result.variantId() + ".json"), json);

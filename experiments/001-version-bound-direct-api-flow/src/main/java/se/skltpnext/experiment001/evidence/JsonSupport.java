@@ -63,6 +63,15 @@ public final class JsonSupport {
         }
     }
 
+    private static final Map<String, Schema> BUNDLED_SCHEMAS = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** Cache only immutable bundled schemas, never metadata, validation results or external input. */
+    public static void validateResource(String resource, JsonNode instance, String label) {
+        Schema schema = BUNDLED_SCHEMAS.computeIfAbsent(resource, name ->
+                SchemaRegistry.withDefaultDialect(SpecificationVersion.DRAFT_2020_12).getSchema(readResource(name)));
+        if (!schema.validate(instance).isEmpty()) throw new IllegalArgumentException(label + " failed schema validation");
+    }
+
     public static void writeJson(Path target, Object value) {
         try {
             Files.createDirectories(target.getParent());

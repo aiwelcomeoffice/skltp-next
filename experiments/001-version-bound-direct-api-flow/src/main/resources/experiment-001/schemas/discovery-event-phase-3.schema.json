@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "runId",
+    "scenarioId",
+    "variantId",
+    "component",
+    "lookupRef",
+    "reason",
+    "result",
+    "endpointId",
+    "candidateCount",
+    "endpointRevision"
+  ],
+  "properties": {
+    "runId": {
+      "type": "string"
+    },
+    "scenarioId": {
+      "type": "string"
+    },
+    "variantId": {
+      "type": "string"
+    },
+    "component": {
+      "type": "string"
+    },
+    "lookupRef": {
+      "type": "string"
+    },
+    "reason": {
+      "type": "string"
+    },
+    "result": {
+      "enum": [
+        "allow",
+        "deny"
+      ]
+    },
+    "endpointId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "candidateCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "endpointRevision": {
+      "type": "integer",
+      "minimum": 0
+    }
+  }
+}

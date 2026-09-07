@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "variants"
+  ],
+  "properties": {
+    "version": {
+      "const": "1.0.0"
+    },
+    "variants": {
+      "type": "array",
+      "minItems": 35,
+      "maxItems": 35,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "scenarioId",
+          "variantId",
+          "expected",
+          "terminalCheckpoint",
+          "reason",
+          "family",
+          "receivers",
+          "payloadReceivers"
+        ],
+        "properties": {
+          "scenarioId": {
+            "enum": [
+              "E001-DIS-002",
+              "E001-DIS-003",
+              "E001-LIFE-001",
+              "E001-META-001",
+              "E001-META-002",
+              "E001-REL-001"
+            ]
+          },
+          "variantId": {
+            "enum": [
+              "ambiguous-endpoint",
+              "ambiguous-ref",
+              "baseline",
+              "digest-mutation",
+              "iam-as-signing-key-revoked-after-bound",
+              "iam-client-wrong-key",
+              "iam-client-wrong-system",
+              "iam-cross-context",
+              "iam-manipulated",
+              "iam-rollback",
+              "iam-stale",
+              "iam-system-wrong-organization",
+              "iam-unknown-client",
+              "iam-unknown-organization",
+              "iam-unknown-system",
+              "iam-wrong-key",
+              "iam-wrong-metadata-issuer",
+              "inactive-A-existing-token-after-offboarding",
+              "inactive-A-token-request-after-offboarding",
+              "inactive-B-before-token",
+              "membership-cross-context",
+              "membership-manipulated",
+              "membership-rollback",
+              "membership-stale",
+              "membership-wrong-key",
+              "membership-wrong-metadata-issuer",
+              "missing-endpoint",
+              "missing-ref",
+              "service-cross-context",
+              "service-manipulated",
+              "service-rollback",
+              "service-stale",
+              "service-wrong-key",
+              "service-wrong-metadata-issuer",
+              "unpublished-service"
+            ]
+          },
+          "expected": {
+            "enum": [
+              "allow",
+              "deny"
+            ]
+          },
+          "terminalCheckpoint": {
+            "enum": [
+              "authorization-server.membership",
+              "discovery.resolved",
+              "membership.producer",
+              "metadata.iam",
+              "metadata.membership",
+              "metadata.service",
+              "producer.authorization",
+              "producer.business-operation",
+              "producer.token-validation",
+              "release.validation"
+            ]
+          },
+          "reason": {
+            "enum": [
+              "ambiguous-endpoint",
+              "ambiguous_ref",
+              "authority",
+              "client-wrong-key",
+              "client-wrong-system",
+              "consumer-inactive",
+              "context",
+              "digest_mutation",
+              "integrity",
+              "membership-inactive",
+              "missing-endpoint",
+              "missing_ref",
+              "producer-inactive",
+              "rollback",
+              "signing-key-revoked",
+              "stale",
+              "synthetic-read-executed",
+              "system-wrong-organization",
+              "unknown-client",
+              "unknown-organization",
+              "unknown-system"
+            ]
+          },
+          "family": {
+            "enum": [
+              "iam",
+              "membership",
+              "none",
+              "service"
+            ]
+          },
+          "receivers": {
+            "type": "array",
+            "items": {
+              "enum": [
+                "authorization-server",
+                "producer-b"
+              ]
+            }
+          },
+          "payloadReceivers": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2
+          }
+        }
+      }
+    }
+  }
+}

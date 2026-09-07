@@ -1,0 +1,276 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:skltp-next:experiment-001:schema:scenario-result-phase-3:1.1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "runId",
+    "scenarioId",
+    "variantId",
+    "releaseId",
+    "releaseVersion",
+    "parameterSetId",
+    "expected",
+    "actual",
+    "status",
+    "checkpoints",
+    "telemetryRef",
+    "auditRef",
+    "contractValidation",
+    "leakageValidation",
+    "terminalCheckpoint",
+    "reason",
+    "metadataEvidenceRef",
+    "discoveryEvidenceRef",
+    "transitionEvidenceRef"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "3.1.0"
+    },
+    "runId": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9._-]{1,64}$"
+    },
+    "scenarioId": {
+      "enum": [
+        "E001-REL-001",
+        "E001-DIS-002",
+        "E001-DIS-003",
+        "E001-META-001",
+        "E001-META-002",
+        "E001-LIFE-001"
+      ]
+    },
+    "variantId": {
+      "enum": [
+        "missing-ref",
+        "ambiguous-ref",
+        "digest-mutation",
+        "baseline",
+        "missing-endpoint",
+        "ambiguous-endpoint",
+        "service-manipulated",
+        "service-rollback",
+        "service-cross-context",
+        "service-wrong-metadata-issuer",
+        "service-wrong-key",
+        "membership-manipulated",
+        "membership-rollback",
+        "membership-cross-context",
+        "membership-wrong-metadata-issuer",
+        "membership-wrong-key",
+        "iam-manipulated",
+        "iam-rollback",
+        "iam-cross-context",
+        "iam-wrong-metadata-issuer",
+        "iam-wrong-key",
+        "iam-unknown-organization",
+        "iam-unknown-system",
+        "iam-unknown-client",
+        "iam-client-wrong-system",
+        "iam-system-wrong-organization",
+        "iam-client-wrong-key",
+        "iam-as-signing-key-revoked-after-bound",
+        "service-stale",
+        "membership-stale",
+        "iam-stale",
+        "inactive-B-before-token",
+        "inactive-A-token-request-after-offboarding",
+        "inactive-A-existing-token-after-offboarding",
+        "unpublished-service"
+      ]
+    },
+    "releaseId": {
+      "const": "E001-RELEASE"
+    },
+    "releaseVersion": {
+      "const": "1.0.0"
+    },
+    "parameterSetId": {
+      "const": "E001-PARAMS-1.0.0"
+    },
+    "expected": {
+      "enum": [
+        "allow",
+        "deny"
+      ]
+    },
+    "actual": {
+      "enum": [
+        "allow",
+        "deny",
+        "harness-error"
+      ]
+    },
+    "status": {
+      "enum": [
+        "pass",
+        "fail",
+        "inconclusive"
+      ]
+    },
+    "checkpoints": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    },
+    "telemetryRef": {
+      "type": "string"
+    },
+    "auditRef": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "contractValidation": {
+      "enum": [
+        "pass",
+        "not-applicable"
+      ]
+    },
+    "leakageValidation": {
+      "const": "pending-collection"
+    },
+    "terminalCheckpoint": {
+      "type": "string"
+    },
+    "reason": {
+      "type": "string"
+    },
+    "metadataEvidenceRef": {
+      "type": "string"
+    },
+    "discoveryEvidenceRef": {
+      "type": "string"
+    },
+    "transitionEvidenceRef": {
+      "type": "string"
+    }
+  },
+  "oneOf": [
+    {
+      "properties": {
+        "scenarioId": {
+          "const": "E001-DIS-002"
+        },
+        "variantId": {
+          "enum": [
+            "baseline"
+          ]
+        },
+        "expected": {
+          "const": "allow"
+        }
+      }
+    },
+    {
+      "properties": {
+        "scenarioId": {
+          "const": "E001-DIS-003"
+        },
+        "variantId": {
+          "enum": [
+            "missing-endpoint",
+            "ambiguous-endpoint"
+          ]
+        },
+        "expected": {
+          "const": "deny"
+        }
+      }
+    },
+    {
+      "properties": {
+        "scenarioId": {
+          "const": "E001-LIFE-001"
+        },
+        "variantId": {
+          "enum": [
+            "inactive-B-before-token",
+            "inactive-A-token-request-after-offboarding",
+            "inactive-A-existing-token-after-offboarding",
+            "unpublished-service"
+          ]
+        },
+        "expected": {
+          "const": "deny"
+        }
+      }
+    },
+    {
+      "properties": {
+        "scenarioId": {
+          "const": "E001-META-001"
+        },
+        "variantId": {
+          "enum": [
+            "service-manipulated",
+            "service-rollback",
+            "service-cross-context",
+            "service-wrong-metadata-issuer",
+            "service-wrong-key",
+            "membership-manipulated",
+            "membership-rollback",
+            "membership-cross-context",
+            "membership-wrong-metadata-issuer",
+            "membership-wrong-key",
+            "iam-manipulated",
+            "iam-rollback",
+            "iam-cross-context",
+            "iam-wrong-metadata-issuer",
+            "iam-wrong-key",
+            "iam-unknown-organization",
+            "iam-unknown-system",
+            "iam-unknown-client",
+            "iam-client-wrong-system",
+            "iam-system-wrong-organization",
+            "iam-client-wrong-key",
+            "iam-as-signing-key-revoked-after-bound"
+          ]
+        },
+        "expected": {
+          "const": "deny"
+        }
+      }
+    },
+    {
+      "properties": {
+        "scenarioId": {
+          "const": "E001-META-002"
+        },
+        "variantId": {
+          "enum": [
+            "service-stale",
+            "membership-stale",
+            "iam-stale"
+          ]
+        },
+        "expected": {
+          "const": "deny"
+        }
+      }
+    },
+    {
+      "properties": {
+        "scenarioId": {
+          "const": "E001-REL-001"
+        },
+        "variantId": {
+          "enum": [
+            "missing-ref",
+            "ambiguous-ref",
+            "digest-mutation"
+          ]
+        },
+        "expected": {
+          "const": "deny"
+        }
+      }
+    }
+  ]
+}

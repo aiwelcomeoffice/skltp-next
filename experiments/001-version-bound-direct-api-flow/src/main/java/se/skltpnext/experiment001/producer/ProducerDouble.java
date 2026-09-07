@@ -47,16 +47,22 @@ public final class ProducerDouble implements HttpHandler {
     private final Path runtimeRoot;
     private final String runId;
     private final URI producerEndpoint;
+    private final String endpointId;
     private final MetadataStores metadataStores;
     private final ContractValidators contracts = new ContractValidators();
     private volatile DefaultDPoPSingleUseChecker dpopChecker;
     private volatile LocalPolicyDecision localPolicyDecision;
 
     public ProducerDouble(Path runtimeRoot, String runId, URI producerEndpoint) {
+        this(runtimeRoot, runId, producerEndpoint, "PRODUCER-ENDPOINT-REV-1");
+    }
+
+    public ProducerDouble(Path runtimeRoot, String runId, URI producerEndpoint, String endpointId) {
+        this.endpointId = endpointId;
         this.runtimeRoot = runtimeRoot;
         this.runId = runId;
         this.producerEndpoint = producerEndpoint;
-        metadataStores = new MetadataStores(runtimeRoot);
+        metadataStores = new MetadataStores(runtimeRoot, endpointId, null);
         reset();
     }
 
@@ -78,9 +84,10 @@ public final class ProducerDouble implements HttpHandler {
                         exchange.getRequestHeaders().getFirst("Authorization"));
                 new CanaryRegistry(runtimeRoot.resolve("private"))
                         .register("access_token", presentedToken.serialized());
+                var currentMetadata = new MetadataStores(runtimeRoot, endpointId, telemetry);
                 JWTClaimsSet claims;
                 try {
-                    claims = tokenValidator().validate(presentedToken.serialized()).claims();
+                    claims = tokenValidator(currentMetadata).validate(presentedToken.serialized()).claims();
                 } catch (AccessTokenValidator.TokenValidationException e) {
                     throw new TokenFailure(e.safeReason(), true, presentedToken.scheme(), e);
                 }
@@ -93,8 +100,7 @@ public final class ProducerDouble implements HttpHandler {
                             "allow", "dpop-resource-proof-valid");
                 }
 
-                if (!metadataStores.membershipActive(ExperimentConfig.ORGANIZATION_A, "consumer")
-                        || !metadataStores.membershipActive(ExperimentConfig.ORGANIZATION_B, "producer")) {
+                if (!currentMetadata.bothMembershipsActive()) {
                     throw new AuthorizationFailure("membership-inactive", false,
                             ExperimentConfig.POLICY_VERSION);
                 }
@@ -122,10 +128,11 @@ public final class ProducerDouble implements HttpHandler {
                 var providerResponse = contracts.validateProviderResponse(body);
                 telemetry.contract(providerResponse.role(), providerResponse.phase(), providerResponse.result());
                 success = true;
-                telemetry.network(callerContext, "producer-b", "PRODUCER-ENDPOINT-REV-1",
+                telemetry.network(callerContext, "producer-b", endpointId,
                         exchange.getRequestMethod(), "/synthetic-records/{recordId}", true);
                 send(exchange, 200, "application/json", body);
             } catch (TokenFailure e) {
+                if (e.safeReason().equals("signing-key-revoked")) telemetry.audit("producer.token-validation", "deny", e.safeReason());
                 telemetry.decision("producer.token-validation", "token_validation",
                         "deny", e.safeReason());
                 String problemType = e.presented()
@@ -133,14 +140,14 @@ public final class ProducerDouble implements HttpHandler {
                         : "urn:skltp-next:experiment-001:error:missing-token";
                 String challenge = e.presented()
                         ? challengeFor(e.scheme()) : MISSING_BEARER_CHALLENGE;
-                telemetry.network(callerContext, "producer-b", "PRODUCER-ENDPOINT-REV-1",
+                telemetry.network(callerContext, "producer-b", endpointId,
                         exchange.getRequestMethod(), "/synthetic-records/{recordId}", false);
                 sendProblem(exchange, telemetry, 401, problemType,
                         e.presented() ? "Invalid token" : "Missing token", challenge);
             } catch (SenderConstraintFailure e) {
                 telemetry.decision("producer.sender-constraint", "sender_constraint",
                         "deny", e.safeReason());
-                telemetry.network(callerContext, "producer-b", "PRODUCER-ENDPOINT-REV-1",
+                telemetry.network(callerContext, "producer-b", endpointId,
                         exchange.getRequestMethod(), "/synthetic-records/{recordId}", false);
                 sendProblem(exchange, telemetry, 401,
                         "urn:skltp-next:experiment-001:error:sender-constraint",
@@ -149,7 +156,7 @@ public final class ProducerDouble implements HttpHandler {
                 telemetry.decision("producer.authorization", "authorization",
                         "deny", e.safeReason(), e.policyVersion());
                 telemetry.audit("producer.authorization", "deny", e.safeReason(), e.policyVersion());
-                telemetry.network(callerContext, "producer-b", "PRODUCER-ENDPOINT-REV-1",
+                telemetry.network(callerContext, "producer-b", endpointId,
                         exchange.getRequestMethod(), "/synthetic-records/{recordId}", false);
                 if (e.insufficientScope()) {
                     sendProblem(exchange, telemetry, 403,
@@ -163,7 +170,7 @@ public final class ProducerDouble implements HttpHandler {
             } catch (Exception e) {
                 telemetry.decision("producer.token-validation", "token_validation",
                         "deny", "invalid-credential-or-contract");
-                telemetry.network(callerContext, "producer-b", "PRODUCER-ENDPOINT-REV-1",
+                telemetry.network(callerContext, "producer-b", endpointId,
                         exchange.getRequestMethod(), "/synthetic-records/{recordId}", false);
                 sendProblem(exchange, telemetry, 401,
                         "urn:skltp-next:experiment-001:error:invalid-token",
@@ -225,8 +232,14 @@ public final class ProducerDouble implements HttpHandler {
         }
     }
 
-    private AccessTokenValidator tokenValidator() {
-        JsonNode iam = metadataStores.readAndValidate("iam");
+    private AccessTokenValidator tokenValidator() throws AccessTokenValidator.TokenValidationException {
+        return tokenValidator(metadataStores);
+    }
+
+    private AccessTokenValidator tokenValidator(MetadataStores stores) throws AccessTokenValidator.TokenValidationException {
+        JsonNode iam = stores.readAndValidate("iam");
+        if ("revoked".equals(iam.required("authorizationServerSigningKeyStatus").asText()))
+            throw new AccessTokenValidator.TokenValidationException("signing-key-revoked");
         try {
             ECKey asKey = ECKey.parse(iam.required("authorizationServerSigningJwk").toString());
             String issuer = iam.required("oauthIssuer").textValue();

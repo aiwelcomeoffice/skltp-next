@@ -65,7 +65,7 @@ public final class AuthorizationServerDouble implements HttpHandler {
         this.runId = runId;
         this.tokenEndpoint = tokenEndpoint;
         this.material = material;
-        metadataStores = new MetadataStores(runtimeRoot);
+        metadataStores = new MetadataStores(runtimeRoot, "authorization-server", null);
         reset();
     }
 
@@ -96,12 +96,17 @@ public final class AuthorizationServerDouble implements HttpHandler {
                 PrivateKeyJWT authentication = PrivateKeyJWT.parse(form);
                 new CanaryRegistry(runtimeRoot.resolve("private"))
                         .register("client_assertion", authentication.getClientAssertion().serialize());
-                clientAuthenticationVerifier().verify(authentication, Set.<Hint>of(), new Context<>());
+                var currentMetadata = new MetadataStores(runtimeRoot, "authorization-server", telemetry);
+                clientAuthenticationVerifier(currentMetadata).verify(authentication, Set.<Hint>of(), new Context<>());
                 telemetry.decision("authorization-server.client-authentication",
                         "client_authentication", "allow", "private-key-jwt-valid");
 
-                if (!metadataStores.membershipActive(ExperimentConfig.ORGANIZATION_A, "consumer")) {
-                    throw new IllegalArgumentException("consumer membership inactive");
+                if (!currentMetadata.membershipActive(ExperimentConfig.ORGANIZATION_A, "consumer")) {
+                    telemetry.decision("authorization-server.membership", "membership_validation", "deny", "consumer-inactive");
+                    telemetry.audit("authorization-server.membership", "deny", "consumer-inactive");
+                    send(exchange, 403, "application/problem+json",
+                            "{\"type\":\"urn:skltp-next:experiment-001:error:inactive-member\",\"title\":\"Inactive member\",\"status\":403}");
+                    return;
                 }
                 String dpopHeader = exchange.getRequestHeaders().getFirst("DPoP");
                 JWKThumbprintConfirmation confirmation = null;
@@ -175,6 +180,14 @@ public final class AuthorizationServerDouble implements HttpHandler {
     }
 
     private ClientAuthenticationVerifier<Void> clientAuthenticationVerifier() {
+        return clientAuthenticationVerifier(metadataStores);
+    }
+
+    private ClientAuthenticationVerifier<Void> clientAuthenticationVerifier(MetadataStores stores) {
+        var iam = stores.readAndValidate("iam");
+        final com.nimbusds.jose.jwk.ECKey registeredKey;
+        try { registeredKey = com.nimbusds.jose.jwk.ECKey.parse(iam.required("clientAuthenticationJwk").toString()); }
+        catch (java.text.ParseException e) { throw new IllegalArgumentException("Invalid registered key", e); }
         ClientCredentialsSelector<Void> selector = new ClientCredentialsSelector<>() {
             @Override
             public List<Secret> selectClientSecrets(ClientID clientID, ClientAuthenticationMethod method,
@@ -189,11 +202,11 @@ public final class AuthorizationServerDouble implements HttpHandler {
                 if (!ExperimentConfig.CLIENT_ID.equals(clientID.getValue())
                         || !ClientAuthenticationMethod.PRIVATE_KEY_JWT.equals(method)
                         || !JWSAlgorithm.ES256.equals(header.getAlgorithm())
-                        || !material.clientAuthenticationKey().getKeyID().equals(header.getKeyID())) {
+                        || !registeredKey.getKeyID().equals(header.getKeyID())) {
                     throw InvalidClientException.NO_MATCHING_JWK;
                 }
                 try {
-                    return List.of(material.clientAuthenticationKey().toECPublicKey());
+                    return List.of(registeredKey.toECPublicKey());
                 } catch (Exception e) {
                     throw new InvalidClientException("Cannot select client public key");
                 }

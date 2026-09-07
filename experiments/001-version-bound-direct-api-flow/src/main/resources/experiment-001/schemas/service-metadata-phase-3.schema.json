@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "family",
+    "issuer",
+    "context",
+    "revision",
+    "issuedAt",
+    "validFrom",
+    "expiresAt",
+    "status",
+    "entries",
+    "previousDigest"
+  ],
+  "properties": {
+    "family": {
+      "const": "service"
+    },
+    "issuer": {
+      "type": "string"
+    },
+    "context": {
+      "type": "string"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "issuedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "validFrom": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expiresAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "enum": [
+        "active",
+        "unpublished"
+      ]
+    },
+    "entries": {
+      "type": "array",
+      "minItems": 0,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "federationId",
+          "testContextId",
+          "producerOrganizationId",
+          "apiProfileId",
+          "contractVersion",
+          "endpointId",
+          "endpointRevision",
+          "endpointUri"
+        ],
+        "properties": {
+          "federationId": {
+            "type": "string"
+          },
+          "testContextId": {
+            "type": "string"
+          },
+          "producerOrganizationId": {
+            "type": "string"
+          },
+          "apiProfileId": {
+            "type": "string"
+          },
+          "contractVersion": {
+            "const": "1.0.0"
+          },
+          "endpointId": {
+            "type": "string",
+            "pattern": "^PRODUCER-ENDPOINT-REV-[1-9][0-9]*$"
+          },
+          "endpointRevision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "endpointUri": {
+            "type": "string",
+            "format": "uri"
+          }
+        }
+      }
+    },
+    "previousDigest": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  },
+  "$id": "urn:skltp-next:experiment-001:schema:service-metadata-phase-3:1.0.0"
+}

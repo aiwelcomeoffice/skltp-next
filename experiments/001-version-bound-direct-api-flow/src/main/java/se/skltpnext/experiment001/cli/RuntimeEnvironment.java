@@ -55,25 +55,38 @@ public final class RuntimeEnvironment {
     public RunningEnvironment start() {
         HttpsServer authorizationServer = null;
         HttpsServer producerServer = null;
+        HttpsServer secondServer = null;
         ExecutorService authorizationExecutor = null;
         ExecutorService producerExecutor = null;
         try {
             CryptoMaterial material = CryptoMaterial.load(runtimeRoot);
             authorizationServer = HttpsServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
             producerServer = HttpsServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+            secondServer = HttpsServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+            URI secondEndpoint = URI.create("https://localhost:" + secondServer.getAddress().getPort());
             URI tokenEndpoint = URI.create("https://localhost:"
                     + authorizationServer.getAddress().getPort() + "/token");
             URI producerEndpoint = URI.create("https://localhost:"
                     + producerServer.getAddress().getPort());
 
             MetadataStores.writeBaseline(runtimeRoot, tokenEndpoint, producerEndpoint, material);
-            new MetadataStores(runtimeRoot).discover();
+            var stores = new MetadataStores(runtimeRoot);
+            var nextService = stores.nextRevision("service");
+            var nextEntry = (com.fasterxml.jackson.databind.node.ObjectNode) nextService.required("entries").get(0);
+            nextEntry.put("endpointId", "PRODUCER-ENDPOINT-REV-2");
+            nextEntry.put("endpointRevision", 2);
+            nextEntry.put("endpointUri", secondEndpoint.toString());
+            MetadataStores.writeSigned(runtimeRoot, "service", nextService, material.metadataKey());
+            stores.discover();
             AuthorizationServerDouble authorization = new AuthorizationServerDouble(
                     runtimeRoot, runId, tokenEndpoint, material);
             ProducerDouble producer = new ProducerDouble(runtimeRoot, runId, producerEndpoint);
+            ProducerDouble secondProducer = new ProducerDouble(runtimeRoot, runId, secondEndpoint, "PRODUCER-ENDPOINT-REV-2");
             String warmUpToken = authorization.warmUpSecurityLibraries();
             producer.warmUpSecurityLibraries(warmUpToken, material.dpopKey());
             producer.warmUpContractValidation();
+            secondProducer.warmUpSecurityLibraries(warmUpToken, material.dpopKey());
+            secondProducer.warmUpContractValidation();
             try (TelemetryRecorder telemetry = new TelemetryRecorder(
                     runtimeRoot, runId, "runtime-warmup", "baseline", "runtime")) {
                 telemetry.warmUpWithoutEvidence();
@@ -83,10 +96,15 @@ public final class RuntimeEnvironment {
                     TlsMaterial.serverContext(runtimeRoot, "as")));
             producerServer.setHttpsConfigurator(new HttpsConfigurator(
                     TlsMaterial.serverContext(runtimeRoot, "producer")));
+            secondServer.setHttpsConfigurator(new HttpsConfigurator(TlsMaterial.serverContext(runtimeRoot, "producer")));
             authorizationExecutor = Executors.newFixedThreadPool(2);
             producerExecutor = Executors.newFixedThreadPool(2);
             authorizationServer.setExecutor(authorizationExecutor);
             producerServer.setExecutor(producerExecutor);
+            secondServer.setExecutor(producerExecutor);
+            secondServer.createContext("/synthetic-records", secondProducer);
+            secondServer.createContext("/ready", exchange -> ready(exchange, "producer-rev-2"));
+            secondServer.createContext("/__reset", exchange -> { secondProducer.reset(); ready(exchange, "producer-reset"); });
             authorizationServer.createContext("/token", authorization);
             producerServer.createContext("/synthetic-records", producer);
             authorizationServer.createContext("/ready", exchange -> ready(exchange, "authorization-server"));
@@ -110,6 +128,7 @@ public final class RuntimeEnvironment {
             });
             authorizationServer.start();
             producerServer.start();
+            secondServer.start();
 
             JsonSupport.writeJson(runtimeRoot.resolve("environment.json"), Map.of(
                     "runId", runId,
@@ -117,9 +136,10 @@ public final class RuntimeEnvironment {
                     "status", "ready",
                     "authorizationServerEndpoint", tokenEndpoint.toString(),
                     "producerEndpoint", producerEndpoint.toString(),
+                    "secondProducerEndpoint", secondEndpoint.toString(),
                     "authorizationListenerId", "AS-LISTENER",
                     "producerListenerId", "PRODUCER-ENDPOINT-REV-1"));
-            return new RunningEnvironment(authorizationServer, producerServer,
+            return new RunningEnvironment(authorizationServer, producerServer, secondServer,
                     authorizationExecutor, producerExecutor);
         } catch (Exception e) {
             if (authorizationServer != null) {
@@ -128,6 +148,7 @@ public final class RuntimeEnvironment {
             if (producerServer != null) {
                 producerServer.stop(0);
             }
+            if (secondServer != null) secondServer.stop(0);
             if (authorizationExecutor != null) {
                 authorizationExecutor.shutdownNow();
             }
@@ -146,6 +167,7 @@ public final class RuntimeEnvironment {
                     node.required("pid").longValue(),
                     URI.create(node.required("authorizationServerEndpoint").textValue()),
                     URI.create(node.required("producerEndpoint").textValue()),
+                    URI.create(node.required("secondProducerEndpoint").textValue()),
                     node.required("status").textValue());
         } catch (IOException e) {
             throw new IllegalStateException("Cannot read environment state", e);
@@ -164,21 +186,23 @@ public final class RuntimeEnvironment {
 
     public record EnvironmentInfo(
             String runId, long pid, URI authorizationServerEndpoint,
-            URI producerEndpoint, String status) {
+            URI producerEndpoint, URI secondProducerEndpoint, String status) {
     }
 
     public static final class RunningEnvironment implements AutoCloseable {
         private final HttpsServer authorizationServer;
         private final HttpsServer producerServer;
+        private final HttpsServer secondServer;
         private final ExecutorService authorizationExecutor;
         private final ExecutorService producerExecutor;
         private final AtomicBoolean closed = new AtomicBoolean();
 
-        private RunningEnvironment(HttpsServer authorizationServer, HttpsServer producerServer,
+        private RunningEnvironment(HttpsServer authorizationServer, HttpsServer producerServer, HttpsServer secondServer,
                                    ExecutorService authorizationExecutor,
                                    ExecutorService producerExecutor) {
             this.authorizationServer = authorizationServer;
             this.producerServer = producerServer;
+            this.secondServer = secondServer;
             this.authorizationExecutor = authorizationExecutor;
             this.producerExecutor = producerExecutor;
         }
@@ -190,6 +214,7 @@ public final class RuntimeEnvironment {
             }
             authorizationServer.stop(0);
             producerServer.stop(0);
+            secondServer.stop(0);
             authorizationExecutor.shutdownNow();
             producerExecutor.shutdownNow();
         }

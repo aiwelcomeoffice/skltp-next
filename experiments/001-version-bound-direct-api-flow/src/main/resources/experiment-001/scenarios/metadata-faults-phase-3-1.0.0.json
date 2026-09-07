@@ -1,0 +1,107 @@
+{
+  "service-manipulated": {
+    "family": "service",
+    "reason": "integrity",
+    "checkpoint": "metadata.service"
+  },
+  "service-rollback": {
+    "family": "service",
+    "reason": "rollback",
+    "checkpoint": "metadata.service"
+  },
+  "service-cross-context": {
+    "family": "service",
+    "reason": "context",
+    "checkpoint": "metadata.service"
+  },
+  "service-wrong-metadata-issuer": {
+    "family": "service",
+    "reason": "authority",
+    "checkpoint": "metadata.service"
+  },
+  "service-wrong-key": {
+    "family": "service",
+    "reason": "integrity",
+    "checkpoint": "metadata.service"
+  },
+  "membership-manipulated": {
+    "family": "membership",
+    "reason": "integrity",
+    "checkpoint": "metadata.membership"
+  },
+  "membership-rollback": {
+    "family": "membership",
+    "reason": "rollback",
+    "checkpoint": "metadata.membership"
+  },
+  "membership-cross-context": {
+    "family": "membership",
+    "reason": "context",
+    "checkpoint": "metadata.membership"
+  },
+  "membership-wrong-metadata-issuer": {
+    "family": "membership",
+    "reason": "authority",
+    "checkpoint": "metadata.membership"
+  },
+  "membership-wrong-key": {
+    "family": "membership",
+    "reason": "integrity",
+    "checkpoint": "metadata.membership"
+  },
+  "iam-manipulated": {
+    "family": "iam",
+    "reason": "integrity",
+    "checkpoint": "metadata.iam"
+  },
+  "iam-rollback": {
+    "family": "iam",
+    "reason": "rollback",
+    "checkpoint": "metadata.iam"
+  },
+  "iam-cross-context": {
+    "family": "iam",
+    "reason": "context",
+    "checkpoint": "metadata.iam"
+  },
+  "iam-wrong-metadata-issuer": {
+    "family": "iam",
+    "reason": "authority",
+    "checkpoint": "metadata.iam"
+  },
+  "iam-wrong-key": {
+    "family": "iam",
+    "reason": "integrity",
+    "checkpoint": "metadata.iam"
+  },
+  "iam-unknown-organization": {
+    "family": "iam",
+    "reason": "unknown-organization",
+    "checkpoint": "metadata.iam"
+  },
+  "iam-unknown-system": {
+    "family": "iam",
+    "reason": "unknown-system",
+    "checkpoint": "metadata.iam"
+  },
+  "iam-unknown-client": {
+    "family": "iam",
+    "reason": "unknown-client",
+    "checkpoint": "metadata.iam"
+  },
+  "iam-client-wrong-system": {
+    "family": "iam",
+    "reason": "client-wrong-system",
+    "checkpoint": "metadata.iam"
+  },
+  "iam-system-wrong-organization": {
+    "family": "iam",
+    "reason": "system-wrong-organization",
+    "checkpoint": "metadata.iam"
+  },
+  "iam-client-wrong-key": {
+    "family": "iam",
+    "reason": "client-wrong-key",
+    "checkpoint": "metadata.iam"
+  }
+}

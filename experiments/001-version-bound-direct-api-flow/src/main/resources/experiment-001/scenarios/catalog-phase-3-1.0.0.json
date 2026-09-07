@@ -1,0 +1,371 @@
+{
+  "version": "1.0.0",
+  "variants": [
+    {
+      "scenarioId": "E001-REL-001",
+      "variantId": "missing-ref",
+      "expected": "deny",
+      "terminalCheckpoint": "release.validation",
+      "reason": "missing_ref",
+      "family": "none",
+      "receivers": [],
+      "payloadReceivers": 0
+    },
+    {
+      "scenarioId": "E001-REL-001",
+      "variantId": "ambiguous-ref",
+      "expected": "deny",
+      "terminalCheckpoint": "release.validation",
+      "reason": "ambiguous_ref",
+      "family": "none",
+      "receivers": [],
+      "payloadReceivers": 0
+    },
+    {
+      "scenarioId": "E001-REL-001",
+      "variantId": "digest-mutation",
+      "expected": "deny",
+      "terminalCheckpoint": "release.validation",
+      "reason": "digest_mutation",
+      "family": "none",
+      "receivers": [],
+      "payloadReceivers": 0
+    },
+    {
+      "scenarioId": "E001-DIS-002",
+      "variantId": "baseline",
+      "expected": "allow",
+      "terminalCheckpoint": "producer.business-operation",
+      "reason": "synthetic-read-executed",
+      "family": "service",
+      "receivers": [
+        "authorization-server",
+        "producer-b",
+        "authorization-server",
+        "producer-b"
+      ],
+      "payloadReceivers": 2
+    },
+    {
+      "scenarioId": "E001-DIS-003",
+      "variantId": "missing-endpoint",
+      "expected": "deny",
+      "terminalCheckpoint": "discovery.resolved",
+      "reason": "missing-endpoint",
+      "family": "service",
+      "receivers": [],
+      "payloadReceivers": 0
+    },
+    {
+      "scenarioId": "E001-DIS-003",
+      "variantId": "ambiguous-endpoint",
+      "expected": "deny",
+      "terminalCheckpoint": "discovery.resolved",
+      "reason": "ambiguous-endpoint",
+      "family": "service",
+      "receivers": [],
+      "payloadReceivers": 0
+    },
+    {
+      "scenarioId": "E001-META-001",
+      "variantId": "service-manipulated",
+      "expected": "deny",
+      "terminalCheckpoint": "metadata.service",
+      "reason": "integrity",
+      "family": "service",
+      "receivers": [],
+      "payloadReceivers": 0
+    },
+    {
+      "scenarioId": "E001-META-001",
+      "variantId": "service-rollback",
+      "expected": "deny",
+      "terminalCheckpoint": "metadata.service",
+      "reason": "rollback",
+      "family": "service",
+      "receivers": [],
+      "payloadReceivers": 0
+    },
+    {
+      "scenarioId": "E001-META-001",
+      "variantId": "service-cross-context",
+      "expected": "deny",
+      "terminalCheckpoint": "metadata.service",
+      "reason": "context",
+      "family": "service",
+      "receivers": [],
+      "payloadReceivers": 0
+    },
+    {
+      "scenarioId": "E001-META-001",
+      "variantId": "service-wrong-metadata-issuer",
+      "expected": "deny",
+      "terminalCheckpoint": "metadata.service",
+      "reason": "authority",
+      "family": "service",
+      "receivers": [],
+      "payloadReceivers": 0
+    },
+    {
+      "scenarioId": "E001-META-001",
+      "variantId": "service-wrong-key",
+      "expected": "deny",
+      "terminalCheckpoint": "metadata.service",
+      "reason": "integrity",
+      "family": "service",
+      "receivers": [],
+      "payloadReceivers": 0
+    },
+    {
+      "scenarioId": "E001-META-001",
+      "variantId": "membership-manipulated",
+      "expected": "deny",
+      "terminalCheckpoint": "metadata.membership",
+      "reason": "integrity",
+      "family": "membership",
+      "receivers": [],
+      "payloadReceivers": 0
+    },
+    {
+      "scenarioId": "E001-META-001",
+      "variantId": "membership-rollback",
+      "expected": "deny",
+      "terminalCheckpoint": "metadata.membership",
+      "reason": "rollback",
+      "family": "membership",
+      "receivers": [],
+      "payloadReceivers": 0
+    },
+    {
+      "scenarioId": "E001-META-001",
+      "variantId": "membership-cross-context",
+      "expected": "deny",
+      "terminalCheckpoint": "metadata.membership",
+      "reason": "context",
+      "family": "membership",
+      "receivers": [],
+      "payloadReceivers": 0
+    },
+    {
+      "scenarioId": "E001-META-001",
+      "variantId": "membership-wrong-metadata-issuer",
+      "expected": "deny",
+      "terminalCheckpoint": "metadata.membership",
+      "reason": "authority",
+      "family": "membership",
+      "receivers": [],
+      "payloadReceivers": 0
+    },
+    {
+      "scenarioId": "E001-META-001",
+      "variantId": "membership-wrong-key",
+      "expected": "deny",
+      "terminalCheckpoint": "metadata.membership",
+      "reason": "integrity",
+      "family": "membership",
+      "receivers": [],
+      "payloadReceivers": 0
+    },
+    {
+      "scenarioId": "E001-META-001",
+      "variantId": "iam-manipulated",
+      "expected": "deny",
+      "terminalCheckpoint": "metadata.iam",
+      "reason": "integrity",
+      "family": "iam",
+      "receivers": [],
+      "payloadReceivers": 0
+    },
+    {
+      "scenarioId": "E001-META-001",
+      "variantId": "iam-rollback",
+      "expected": "deny",
+      "terminalCheckpoint": "metadata.iam",
+      "reason": "rollback",
+      "family": "iam",
+      "receivers": [],
+      "payloadReceivers": 0
+    },
+    {
+      "scenarioId": "E001-META-001",
+      "variantId": "iam-cross-context",
+      "expected": "deny",
+      "terminalCheckpoint": "metadata.iam",
+      "reason": "context",
+      "family": "iam",
+      "receivers": [],
+      "payloadReceivers": 0
+    },
+    {
+      "scenarioId": "E001-META-001",
+      "variantId": "iam-wrong-metadata-issuer",
+      "expected": "deny",
+      "terminalCheckpoint": "metadata.iam",
+      "reason": "authority",
+      "family": "iam",
+      "receivers": [],
+      "payloadReceivers": 0
+    },
+    {
+      "scenarioId": "E001-META-001",
+      "variantId": "iam-wrong-key",
+      "expected": "deny",
+      "terminalCheckpoint": "metadata.iam",
+      "reason": "integrity",
+      "family": "iam",
+      "receivers": [],
+      "payloadReceivers": 0
+    },
+    {
+      "scenarioId": "E001-META-001",
+      "variantId": "iam-unknown-organization",
+      "expected": "deny",
+      "terminalCheckpoint": "metadata.iam",
+      "reason": "unknown-organization",
+      "family": "iam",
+      "receivers": [],
+      "payloadReceivers": 0
+    },
+    {
+      "scenarioId": "E001-META-001",
+      "variantId": "iam-unknown-system",
+      "expected": "deny",
+      "terminalCheckpoint": "metadata.iam",
+      "reason": "unknown-system",
+      "family": "iam",
+      "receivers": [],
+      "payloadReceivers": 0
+    },
+    {
+      "scenarioId": "E001-META-001",
+      "variantId": "iam-unknown-client",
+      "expected": "deny",
+      "terminalCheckpoint": "metadata.iam",
+      "reason": "unknown-client",
+      "family": "iam",
+      "receivers": [],
+      "payloadReceivers": 0
+    },
+    {
+      "scenarioId": "E001-META-001",
+      "variantId": "iam-client-wrong-system",
+      "expected": "deny",
+      "terminalCheckpoint": "metadata.iam",
+      "reason": "client-wrong-system",
+      "family": "iam",
+      "receivers": [],
+      "payloadReceivers": 0
+    },
+    {
+      "scenarioId": "E001-META-001",
+      "variantId": "iam-system-wrong-organization",
+      "expected": "deny",
+      "terminalCheckpoint": "metadata.iam",
+      "reason": "system-wrong-organization",
+      "family": "iam",
+      "receivers": [],
+      "payloadReceivers": 0
+    },
+    {
+      "scenarioId": "E001-META-001",
+      "variantId": "iam-client-wrong-key",
+      "expected": "deny",
+      "terminalCheckpoint": "metadata.iam",
+      "reason": "client-wrong-key",
+      "family": "iam",
+      "receivers": [],
+      "payloadReceivers": 0
+    },
+    {
+      "scenarioId": "E001-META-001",
+      "variantId": "iam-as-signing-key-revoked-after-bound",
+      "expected": "deny",
+      "terminalCheckpoint": "producer.token-validation",
+      "reason": "signing-key-revoked",
+      "family": "iam",
+      "receivers": [
+        "authorization-server",
+        "producer-b",
+        "producer-b"
+      ],
+      "payloadReceivers": 1
+    },
+    {
+      "scenarioId": "E001-META-002",
+      "variantId": "service-stale",
+      "expected": "deny",
+      "terminalCheckpoint": "metadata.service",
+      "reason": "stale",
+      "family": "service",
+      "receivers": [],
+      "payloadReceivers": 0
+    },
+    {
+      "scenarioId": "E001-META-002",
+      "variantId": "membership-stale",
+      "expected": "deny",
+      "terminalCheckpoint": "metadata.membership",
+      "reason": "stale",
+      "family": "membership",
+      "receivers": [],
+      "payloadReceivers": 0
+    },
+    {
+      "scenarioId": "E001-META-002",
+      "variantId": "iam-stale",
+      "expected": "deny",
+      "terminalCheckpoint": "metadata.iam",
+      "reason": "stale",
+      "family": "iam",
+      "receivers": [],
+      "payloadReceivers": 0
+    },
+    {
+      "scenarioId": "E001-LIFE-001",
+      "variantId": "inactive-B-before-token",
+      "expected": "deny",
+      "terminalCheckpoint": "membership.producer",
+      "reason": "producer-inactive",
+      "family": "membership",
+      "receivers": [],
+      "payloadReceivers": 0
+    },
+    {
+      "scenarioId": "E001-LIFE-001",
+      "variantId": "inactive-A-token-request-after-offboarding",
+      "expected": "deny",
+      "terminalCheckpoint": "authorization-server.membership",
+      "reason": "consumer-inactive",
+      "family": "membership",
+      "receivers": [
+        "authorization-server",
+        "authorization-server"
+      ],
+      "payloadReceivers": 0
+    },
+    {
+      "scenarioId": "E001-LIFE-001",
+      "variantId": "inactive-A-existing-token-after-offboarding",
+      "expected": "deny",
+      "terminalCheckpoint": "producer.authorization",
+      "reason": "membership-inactive",
+      "family": "membership",
+      "receivers": [
+        "authorization-server",
+        "producer-b",
+        "producer-b"
+      ],
+      "payloadReceivers": 1
+    },
+    {
+      "scenarioId": "E001-LIFE-001",
+      "variantId": "unpublished-service",
+      "expected": "deny",
+      "terminalCheckpoint": "discovery.resolved",
+      "reason": "missing-endpoint",
+      "family": "service",
+      "receivers": [],
+      "payloadReceivers": 0
+    }
+  ]
+}

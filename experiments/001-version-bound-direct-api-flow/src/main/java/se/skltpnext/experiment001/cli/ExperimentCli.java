@@ -54,11 +54,32 @@ public final class ExperimentCli {
             case "check-readiness" -> checkReadiness(options);
             case "reset-test-state" -> resetTestState(options);
             case "run-scenario" -> runScenario(options);
+            case "run-suite" -> runPhaseThreeSuite(options);
             case "collect-evidence" -> collectEvidence(options);
             case "validate-evidence" -> validateEvidence(options);
             case "stop-environment" -> stopEnvironment(options);
             default -> throw new IllegalArgumentException("Unknown Experiment 001 command");
         };
+    }
+
+    private static int runPhaseThreeSuite(Map<String, String> options) {
+        require(options, "through-phase", "3");
+        String runId = required(options, "run-id");
+        var engine = new ScenarioEngine(ExperimentConfig.runtimeRoot(runId), runId);
+        if (!engine.ready()) throw new IllegalStateException("Environment not ready");
+        java.util.ArrayList<String> variants = new java.util.ArrayList<>();
+        variants.addAll(ExperimentConfig.PHASE_1_VARIANTS.stream().sorted().toList());
+        variants.addAll(ExperimentConfig.PHASE_2_VARIANTS.stream().sorted().toList());
+        variants.addAll(ExperimentConfig.PHASE_3_VARIANTS.stream().sorted().toList());
+        boolean passed = true;
+        for (String key : variants) {
+            String[] parts = key.split("/", 2);
+            var result = engine.run(parts[0], parts[1]);
+            System.out.println(key + ": " + result.status());
+            passed &= result.passed();
+        }
+        System.out.println("phase-1-through-3: " + (passed ? "pass" : "inconclusive"));
+        return passed ? 0 : 2;
     }
 
     private static int verifyPrerequisites() {

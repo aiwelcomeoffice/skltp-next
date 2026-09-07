@@ -1,0 +1,161 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "family",
+    "issuer",
+    "context",
+    "revision",
+    "issuedAt",
+    "validFrom",
+    "expiresAt",
+    "status",
+    "organizationId",
+    "systemId",
+    "clientId",
+    "oauthIssuer",
+    "tokenEndpoint",
+    "audience",
+    "scope",
+    "clientAuthenticationMethod",
+    "clientAuthenticationJwk",
+    "authorizationServerSigningJwk",
+    "dpopJwk",
+    "previousDigest",
+    "organizations",
+    "systems",
+    "clients",
+    "authorizationServerSigningKeyStatus"
+  ],
+  "properties": {
+    "family": {
+      "const": "iam"
+    },
+    "issuer": {
+      "type": "string"
+    },
+    "context": {
+      "type": "string"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "issuedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "validFrom": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expiresAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "const": "active"
+    },
+    "organizationId": {
+      "type": "string"
+    },
+    "systemId": {
+      "type": "string"
+    },
+    "clientId": {
+      "type": "string"
+    },
+    "oauthIssuer": {
+      "type": "string"
+    },
+    "tokenEndpoint": {
+      "type": "string",
+      "format": "uri"
+    },
+    "audience": {
+      "type": "string"
+    },
+    "scope": {
+      "const": "synthetic.read"
+    },
+    "clientAuthenticationMethod": {
+      "const": "private_key_jwt"
+    },
+    "clientAuthenticationJwk": {
+      "type": "object"
+    },
+    "authorizationServerSigningJwk": {
+      "type": "object"
+    },
+    "dpopJwk": {
+      "type": "object"
+    },
+    "previousDigest": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "authorizationServerSigningKeyStatus": {
+      "enum": [
+        "active",
+        "revoked"
+      ]
+    },
+    "organizations": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string"
+      }
+    },
+    "systems": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "systemId",
+          "organizationId"
+        ],
+        "properties": {
+          "systemId": {
+            "type": "string"
+          },
+          "organizationId": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "clients": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "clientId",
+          "systemId",
+          "keyId"
+        ],
+        "properties": {
+          "clientId": {
+            "type": "string"
+          },
+          "systemId": {
+            "type": "string"
+          },
+          "keyId": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "$id": "urn:skltp-next:experiment-001:schema:iam-metadata-phase-3:1.0.0"
+}

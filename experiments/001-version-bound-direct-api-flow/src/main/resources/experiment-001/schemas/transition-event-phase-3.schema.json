@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "runId",
+    "scenarioId",
+    "variantId",
+    "family",
+    "activatedAt",
+    "observedAt",
+    "oldRevision",
+    "newRevision",
+    "elapsedMillis",
+    "boundMillis"
+  ],
+  "properties": {
+    "runId": {
+      "type": "string"
+    },
+    "scenarioId": {
+      "type": "string"
+    },
+    "variantId": {
+      "type": "string"
+    },
+    "family": {
+      "type": "string"
+    },
+    "activatedAt": {
+      "type": "string"
+    },
+    "observedAt": {
+      "type": "string"
+    },
+    "oldRevision": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "newRevision": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "elapsedMillis": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "boundMillis": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "beforeDigests": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^[a-zA-Z0-9_-]{43}$|^[a-f0-9]{64}$"
+      }
+    },
+    "afterDigests": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^[a-zA-Z0-9_-]{43}$|^[a-f0-9]{64}$"
+      }
+    },
+    "technicalTokenValid": {
+      "type": "boolean"
+    }
+  }
+}
