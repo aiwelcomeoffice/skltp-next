@@ -147,6 +147,21 @@ public final class TelemetryRecorder implements AutoCloseable {
             event.put("policyVersion", policyVersion);
         }
         writeAllowlisted(runtimeRoot.resolve("events/telemetry/decisions.jsonl"), event, DECISION_FIELDS);
+        var observation = ObservationContext.read(runtimeRoot);
+        if (observation != null && Set.of("client_authentication", "token_validation", "sender_constraint", "authorization").contains(category)) {
+            var common = ObservationContext.common(observation, runId, component, checkpoint, category, result, reason, policyVersion);
+            String decisionRef = "DECISION-" + UUID.randomUUID();
+            String auditRef = new AuditRecorder().write(runtimeRoot, common, decisionRef);
+            Span span = tracer.spanBuilder("observation." + checkpoint).startSpan();
+            var observed = new java.util.LinkedHashMap<String, Object>(common);
+            observed.put("decisionRef", decisionRef); observed.put("auditRef", auditRef);
+            observed.put("traceId", span.getSpanContext().getTraceId());
+            observed.put("spanId", span.getSpanContext().getSpanId());
+            JsonSupport.validateResource("experiment-001/schemas/decision-phase-5.schema.json",
+                    JsonSupport.MAPPER.valueToTree(observed), "OBS decision");
+            JsonSupport.appendJsonLine(runtimeRoot.resolve("events/telemetry/observations.jsonl"), observed);
+            endAndExport(span, result.equals("allow"));
+        }
     }
 
     public void metadata(String family, int revision, long age, long ttl, long max,

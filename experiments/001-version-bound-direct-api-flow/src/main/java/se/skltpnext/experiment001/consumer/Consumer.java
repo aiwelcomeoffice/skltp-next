@@ -45,11 +45,18 @@ public final class Consumer {
     private final CryptoMaterial material;
     private final HttpClient httpClient;
     private final boolean observeFaults;
+    public enum ObservationStimulus { NONE, BAD_ASSERTION_SIGNATURE, BAD_RESOURCE_SIGNATURE }
+    private final ObservationStimulus observationStimulus;
     private final ContractValidators contracts = new ContractValidators();
 
     public Consumer(Path runtimeRoot, String runId) { this(runtimeRoot, runId, false); }
 
     public Consumer(Path runtimeRoot, String runId, boolean observeFaults) {
+        this(runtimeRoot, runId, observeFaults, ObservationStimulus.NONE);
+    }
+
+    public Consumer(Path runtimeRoot, String runId, boolean observeFaults, ObservationStimulus stimulus) {
+        this.observationStimulus = stimulus;
         this.observeFaults = observeFaults;
         this.runtimeRoot = runtimeRoot;
         this.runId = runId;
@@ -179,7 +186,10 @@ public final class Consumer {
                                 "GET", resourceUri, Date.from(Instant.now()), dpopAccessToken);
                 new CanaryRegistry(runtimeRoot.resolve("private"))
                         .register("dpop_proof", resourceProof.serialize());
-                requestBuilder.header("DPoP", resourceProof.serialize());
+                String proof = observationStimulus == ObservationStimulus.BAD_RESOURCE_SIGNATURE
+                        ? badSignature(resourceProof.serialize()) : resourceProof.serialize();
+                new CanaryRegistry(runtimeRoot.resolve("private")).register("dpop_proof", proof);
+                requestBuilder.header("DPoP", proof);
             }
 
             Span span = telemetry.startConsumerSpan(EXTERNAL_TRACEPARENT);
@@ -250,6 +260,11 @@ public final class Consumer {
                 .register("client_assertion", authentication.getClientAssertion().serialize());
 
         Map<String, List<String>> form = new LinkedHashMap<>(authentication.toParameters());
+        if (observationStimulus == ObservationStimulus.BAD_ASSERTION_SIGNATURE) {
+            String assertion = badSignature(authentication.getClientAssertion().serialize());
+            form.put("client_assertion", List.of(assertion));
+            new CanaryRegistry(runtimeRoot.resolve("private")).register("client_assertion", assertion);
+        }
         form.put("grant_type", List.of("client_credentials"));
         form.put("scope", List.of(scope));
         HttpRequest.Builder request = HttpRequest.newBuilder(discovery.tokenEndpoint())
@@ -280,13 +295,13 @@ public final class Consumer {
 
     private HttpResponse<String> sendObserved(HttpRequest request, String scenario, String variant,
                                                String dependency) throws Exception {
-        if (!observeFaults) return httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        if (!observeFaults) return sendCaptured(request);
         PhaseFourEvents.record(runtimeRoot, runId, scenario, variant,
                 "client-attempt", Map.of("dependency", dependency, "attempts", 1));
         long start = System.nanoTime();
         String outcome = "success";
         try {
-            var response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            var response = sendCaptured(request);
             if (response.statusCode() == 503) { outcome = "unavailable"; throw new DependencyFailure(dependency, outcome); }
             return response;
         } catch (java.net.http.HttpTimeoutException e) {
@@ -307,6 +322,19 @@ public final class Consumer {
                         "dependency_failure", "deny", outcome);
             }
         }
+    }
+
+    private HttpResponse<String> sendCaptured(HttpRequest request) throws Exception {
+        var response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        se.skltpnext.experiment001.telemetry.ObservationContext.externalResponse(runtimeRoot,
+                response.statusCode(), response.body(), response.headers().firstValue("WWW-Authenticate").orElse(""));
+        return response;
+    }
+
+    private static String badSignature(String jwt) {
+        int start = jwt.lastIndexOf('.') + 1;
+        char changed = jwt.charAt(start) == 'A' ? 'B' : 'A';
+        return jwt.substring(0, start) + changed + jwt.substring(start + 1);
     }
 
     private boolean internalDetailAbsent(String body) throws Exception {

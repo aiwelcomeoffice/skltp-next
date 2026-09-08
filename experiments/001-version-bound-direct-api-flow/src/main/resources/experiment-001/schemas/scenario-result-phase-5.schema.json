@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:skltp-next:experiment-001:scenario-result-phase-5:1.0.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "runId",
+    "scenarioId",
+    "variantId",
+    "releaseId",
+    "releaseVersion",
+    "parameterSetId",
+    "status",
+    "observationsRef"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "5.0.0"
+    },
+    "runId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scenarioId": {
+      "enum": [
+        "E001-OBS-001",
+        "E001-OBS-002"
+      ]
+    },
+    "variantId": {
+      "const": "baseline"
+    },
+    "releaseId": {
+      "const": "E001-RELEASE"
+    },
+    "releaseVersion": {
+      "const": "1.0.0"
+    },
+    "parameterSetId": {
+      "const": "E001-PARAMS-1.0.0"
+    },
+    "status": {
+      "enum": [
+        "pass",
+        "fail",
+        "inconclusive"
+      ]
+    },
+    "observationsRef": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

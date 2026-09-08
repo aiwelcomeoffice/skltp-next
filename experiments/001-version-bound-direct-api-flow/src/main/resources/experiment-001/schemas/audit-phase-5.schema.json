@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:skltp-next:experiment-001:audit-phase-5:1.0.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "runId",
+    "stimulusRef",
+    "sourceScenarioId",
+    "sourceVariantId",
+    "checkpoint",
+    "reason",
+    "scenarioId",
+    "variantId",
+    "actor",
+    "category",
+    "result",
+    "releaseId",
+    "releaseVersion",
+    "profileVersion",
+    "policyVersion",
+    "decisionRef",
+    "auditRecordId",
+    "organizationRef",
+    "systemRef",
+    "clientRef",
+    "recordedAt"
+  ],
+  "properties": {
+    "runId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "stimulusRef": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sourceScenarioId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sourceVariantId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "checkpoint": {
+      "type": "string",
+      "minLength": 1
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scenarioId": {
+      "enum": [
+        "E001-OBS-001",
+        "E001-OBS-002"
+      ]
+    },
+    "variantId": {
+      "const": "baseline"
+    },
+    "actor": {
+      "enum": [
+        "authorization-server",
+        "producer"
+      ]
+    },
+    "category": {
+      "enum": [
+        "client_authentication",
+        "token_validation",
+        "sender_constraint",
+        "authorization"
+      ]
+    },
+    "result": {
+      "enum": [
+        "allow",
+        "deny"
+      ]
+    },
+    "releaseId": {
+      "const": "E001-RELEASE"
+    },
+    "releaseVersion": {
+      "const": "1.0.0"
+    },
+    "profileVersion": {
+      "const": "1.0.0"
+    },
+    "policyVersion": {
+      "const": "1.0.0"
+    },
+    "decisionRef": {
+      "type": "string",
+      "pattern": "^DECISION-[a-f0-9-]{36}$"
+    },
+    "auditRecordId": {
+      "type": "string",
+      "pattern": "^AUDIT-[a-f0-9-]{36}$"
+    },
+    "organizationRef": {
+      "const": "ORG_A"
+    },
+    "systemRef": {
+      "const": "SYSTEM_A"
+    },
+    "clientRef": {
+      "const": "CLIENT_A"
+    },
+    "recordedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

@@ -19,7 +19,7 @@ public final class CanaryRegistry {
 
     public void register(String type, String value) {
         JsonSupport.appendJsonLine(file, Map.of(
-                "canaryId", "CANARY-" + type.toUpperCase().replace('_', '-'),
+                "canaryId", "CANARY-" + type.toUpperCase().replace('_', '-') + "-" + UUID.randomUUID(),
                 "type", type,
                 "value", value));
     }

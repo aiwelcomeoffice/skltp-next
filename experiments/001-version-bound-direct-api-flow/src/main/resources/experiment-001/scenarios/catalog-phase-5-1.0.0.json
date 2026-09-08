@@ -1,0 +1,90 @@
+{
+  "schemaVersion": "5.0.0",
+  "scenarios": {
+    "E001-OBS-001": [
+      {
+        "sourceScenarioId": "E001-FLOW-001",
+        "sourceVariantId": "baseline",
+        "category": "business_operation",
+        "actor": "producer",
+        "checkpoint": "producer.business-operation",
+        "reason": "synthetic-read-executed",
+        "httpStatus": 200
+      },
+      {
+        "sourceScenarioId": "E001-AUTHN-001",
+        "sourceVariantId": "bad-signature",
+        "category": "client_authentication",
+        "actor": "authorization-server",
+        "checkpoint": "authorization-server.client-authentication",
+        "reason": "invalid-client-or-proof",
+        "httpStatus": 401
+      },
+      {
+        "sourceScenarioId": "E001-TOK-001",
+        "sourceVariantId": "wrong-issuer",
+        "category": "token_validation",
+        "actor": "producer",
+        "checkpoint": "producer.token-validation",
+        "reason": "wrong-issuer",
+        "httpStatus": 401
+      },
+      {
+        "sourceScenarioId": "E001-DPOP-001",
+        "sourceVariantId": "resource-bad-signature",
+        "category": "sender_constraint",
+        "actor": "producer",
+        "checkpoint": "producer.sender-constraint",
+        "reason": "dpop-key-or-proof-mismatch",
+        "httpStatus": 401
+      },
+      {
+        "sourceScenarioId": "E001-CON-002",
+        "sourceVariantId": "invalid-request",
+        "category": "contract_validation",
+        "actor": "producer",
+        "checkpoint": "producer.contract-request",
+        "reason": "invalid-request",
+        "httpStatus": 400
+      }
+    ],
+    "E001-OBS-002": [
+      {
+        "sourceScenarioId": "E001-AUTHN-001",
+        "sourceVariantId": "bad-signature",
+        "category": "client_authentication",
+        "actor": "authorization-server",
+        "checkpoint": "authorization-server.client-authentication",
+        "reason": "invalid-client-or-proof",
+        "httpStatus": 401
+      },
+      {
+        "sourceScenarioId": "E001-TOK-001",
+        "sourceVariantId": "wrong-issuer",
+        "category": "token_validation",
+        "actor": "producer",
+        "checkpoint": "producer.token-validation",
+        "reason": "wrong-issuer",
+        "httpStatus": 401
+      },
+      {
+        "sourceScenarioId": "E001-SEC-002",
+        "sourceVariantId": "baseline",
+        "category": "sender_constraint",
+        "actor": "producer",
+        "checkpoint": "producer.sender-constraint",
+        "reason": "dpop-key-or-proof-mismatch",
+        "httpStatus": 401
+      },
+      {
+        "sourceScenarioId": "E001-AUTHZ-001",
+        "sourceVariantId": "local-policy-deny",
+        "category": "authorization",
+        "actor": "producer",
+        "checkpoint": "producer.authorization",
+        "reason": "local-policy-deny",
+        "httpStatus": 403
+      }
+    ]
+  }
+}
