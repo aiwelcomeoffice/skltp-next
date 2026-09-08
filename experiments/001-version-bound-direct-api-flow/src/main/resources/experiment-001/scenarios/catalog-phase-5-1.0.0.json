@@ -9,7 +9,8 @@
         "actor": "producer",
         "checkpoint": "producer.business-operation",
         "reason": "synthetic-read-executed",
-        "httpStatus": 200
+        "httpStatus": 200,
+        "policyVersion": "1.0.0"
       },
       {
         "sourceScenarioId": "E001-AUTHN-001",
@@ -18,7 +19,8 @@
         "actor": "authorization-server",
         "checkpoint": "authorization-server.client-authentication",
         "reason": "invalid-client-or-proof",
-        "httpStatus": 401
+        "httpStatus": 401,
+        "policyVersion": "1.0.0"
       },
       {
         "sourceScenarioId": "E001-TOK-001",
@@ -27,7 +29,8 @@
         "actor": "producer",
         "checkpoint": "producer.token-validation",
         "reason": "wrong-issuer",
-        "httpStatus": 401
+        "httpStatus": 401,
+        "policyVersion": "1.0.0"
       },
       {
         "sourceScenarioId": "E001-DPOP-001",
@@ -36,7 +39,8 @@
         "actor": "producer",
         "checkpoint": "producer.sender-constraint",
         "reason": "dpop-key-or-proof-mismatch",
-        "httpStatus": 401
+        "httpStatus": 401,
+        "policyVersion": "1.0.0"
       },
       {
         "sourceScenarioId": "E001-CON-002",
@@ -45,7 +49,8 @@
         "actor": "producer",
         "checkpoint": "producer.contract-request",
         "reason": "invalid-request",
-        "httpStatus": 400
+        "httpStatus": 404,
+        "policyVersion": "1.0.0"
       }
     ],
     "E001-OBS-002": [
@@ -56,7 +61,8 @@
         "actor": "authorization-server",
         "checkpoint": "authorization-server.client-authentication",
         "reason": "invalid-client-or-proof",
-        "httpStatus": 401
+        "httpStatus": 401,
+        "policyVersion": "1.0.0"
       },
       {
         "sourceScenarioId": "E001-TOK-001",
@@ -65,7 +71,8 @@
         "actor": "producer",
         "checkpoint": "producer.token-validation",
         "reason": "wrong-issuer",
-        "httpStatus": 401
+        "httpStatus": 401,
+        "policyVersion": "1.0.0"
       },
       {
         "sourceScenarioId": "E001-SEC-002",
@@ -74,7 +81,8 @@
         "actor": "producer",
         "checkpoint": "producer.sender-constraint",
         "reason": "dpop-key-or-proof-mismatch",
-        "httpStatus": 401
+        "httpStatus": 401,
+        "policyVersion": "1.0.0"
       },
       {
         "sourceScenarioId": "E001-AUTHZ-001",
@@ -83,7 +91,8 @@
         "actor": "producer",
         "checkpoint": "producer.authorization",
         "reason": "local-policy-deny",
-        "httpStatus": 403
+        "httpStatus": 403,
+        "policyVersion": "phase-2-local-deny-1.0.0"
       }
     ]
   }

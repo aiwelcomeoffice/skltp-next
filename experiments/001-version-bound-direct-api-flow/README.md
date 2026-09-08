@@ -1,6 +1,8 @@
-# Experiment 001 – Fas 1–4
+# Experiment 001 – Fas 1–5
 
-Status: `experimental`. Fas 1–4 är implementerade och verifierade inom den lokala modellen.
+Status: `experimental`. Fas 1–5 är implementerade och verifierade inom den lokala modellen.
+[Fas 5-rapporten](../../docs/experiments/001-version-bound-direct-api-flow-phase-5-report.md)
+redovisar OBS-körningen, oberoende evidensvalidering och begränsningar.
 [Fas 4-rapporten](../../docs/experiments/001-version-bound-direct-api-flow-phase-4-report.md)
 redovisar slutverifieringen på commit `f613ac2`, resultat och begränsningar.
 Historiken finns i [Fas 1](../../docs/experiments/001-version-bound-direct-api-flow-phase-1-report.md),
@@ -9,9 +11,15 @@ Historiken finns i [Fas 1](../../docs/experiments/001-version-bound-direct-api-f
 [Fas 3b1](../../docs/experiments/001-version-bound-direct-api-flow-phase-3b1-report.md)
 och [hela Fas 3](../../docs/experiments/001-version-bound-direct-api-flow-phase-3-report.md).
 
-Modulen är en syntetisk lokal experimentharness med 64 kombinationer:
-4 i Fas 1, 16 i Fas 2, 35 i Fas 3 och 9 i Fas 4. Hela Experiment 001 är inte klassificerat.
-Fas 5–7 är inte påbörjade.
+Modulen är en syntetisk lokal experimentharness med 66 kombinationer:
+4 i Fas 1, 16 i Fas 2, 35 i Fas 3, 9 i Fas 4 och 2 i Fas 5.
+Hela Experiment 001 är inte klassificerat. Fas 6–7 är inte påbörjade.
+
+Fas 5 omfattar endast `E001-OBS-001/baseline` (fem självständiga stimuli)
+och `E001-OBS-002/baseline` (fyra självständiga stimuli). De två tillåtna
+AUTHN-/DPoP-byggarna används som proveniens inom OBS och är inte registrerade
+som genomförda extended-scenarier. Exakta observationer jämförs mot
+[Fas 5-katalogen](src/main/resources/experiment-001/scenarios/catalog-phase-5-1.0.0.json).
 
 | Fas 4-scenario | Antal varianter | Omfattning |
 |---|---:|---|
@@ -69,8 +77,8 @@ Det kanoniska bygg- och testkommandot är:
 ```
 
 Det kör Enforcer, enhets-, tool-conformance-, kontrakts-, HTTPS-trust- och
-Fas 1–4-integrationstester och skapar `target/experiment-001-cli.jar`.
-Fas 4-integrationstestet kör alla 64 implementerade kombinationer och validerar ett
+Fas 1–5-integrationstester och skapar `target/experiment-001-cli.jar`.
+Fas 5-integrationstestet kör alla 66 implementerade kombinationer och validerar ett
 komplett evidenspaket.
 
 Verifiera därefter runtime, plattform, wrapperkonfiguration, källträd och
@@ -83,7 +91,7 @@ loopback:
 ## Förbered och validera fixtures
 
 ```bash
-export RUN_ID=phase4-verification
+export RUN_ID=phase5-verification
 "$EXP001_JAVA_HOME/bin/java" -jar target/experiment-001-cli.jar prepare-fixtures \
   --run-id "$RUN_ID" --release 1.0.0 --parameters 1.0.0
 "$EXP001_JAVA_HOME/bin/java" -jar target/experiment-001-cli.jar validate \
@@ -116,7 +124,7 @@ done
   --run-id "$RUN_ID"
 ```
 
-## Kör hela Fas 1–4
+## Kör hela Fas 1–5
 
 Varje scenario återställer metadata, familje-/aktörscache, logisk klocka,
 replaystate och policy samt tidigare evidens för just den kombinationen.
@@ -124,10 +132,10 @@ Båda producentrevisionerna förblir separata lyssnare. Kör sekventiellt:
 
 ```bash
 "$EXP001_JAVA_HOME/bin/java" -jar target/experiment-001-cli.jar run-suite \
-  --run-id "$RUN_ID" --through-phase 4
+  --run-id "$RUN_ID" --through-phase 5
 ```
 
-Kommandot kör exakt 64 kombinationer och avslutas med exit 0 endast om alla
+Kommandot kör exakt 66 kombinationer och avslutas med exit 0 endast om alla
 fick `pass`. En enskild variant kan köras med:
 
 ```bash
@@ -140,7 +148,7 @@ explicit `inconclusive` trots ett sent, korrekt svar. Ändra inte timeouten
 eller oraklet. Bevara först den felande körningens tillgängliga evidens
 separat och verifiera hostläget innan en ny körning. Samla även underlag för
 `fail` och `inconclusive`; endast ett komplett, godkänt paket med samtliga
-64 resultat `pass` stöder statusen Fas 1–4 verifierade.
+66 resultat `pass` stöder statusen Fas 1–5 verifierade.
 
 ## Samla och validera evidens
 
@@ -154,14 +162,14 @@ Samla och validera innan privat runtime-state tas bort:
 ```
 
 Det schema-validerade och läckageskannade paketet skapas i
-`target/experiment-001/evidence/$RUN_ID/`. Manifestet omfattar de 64 implementerade kombinationerna,
+`target/experiment-001/evidence/$RUN_ID/`. Manifestet omfattar de 66 implementerade kombinationerna,
 alla resultat, checkpoint-evidens, extern felklassificering, direktflödesledger
 och en tom säker harness-felkanal. `validate-evidence` verifierar manifest,
 filchecksummer, läckageskanning och payload-call ledger. Fas 3 har separata
 schema-validerade metadata-, discovery-, transition- och audithändelser samt
 ett oberoende observationsorakel över de exporterade filerna. Det kontrollerar
 också anropsordning, terminal checkpoint, cachegränser och saknad evidens.
-`classification.json` skiljer `phaseFourResult: verified` från
+`classification.json` skiljer `phaseFiveResult: verified` från
 `experiment001: not-classified`.
 
 Fas 4 har också schema-validerade observationer i `phase-4/observations.jsonl`
@@ -174,6 +182,34 @@ Checksumman måste förbli oförändrad, och reset dränerar handlers före näs
 Ett enda sidoeffektsfritt producentanrop kan ha utförts före timeouten.
 Klassificeringen gäller Fas 4 i den lokala modellen; hela Experiment 001 förblir
 `not-classified`. `run-suite --through-phase 3` finns kvar för enbart de 55 tidigare kombinationerna.
+
+Fas 5 återställer samma fixtures mellan varje stimulus och isolerar dess
+kanaler från tidigare scenarioresultat. `phase-5/<OBS-id>/<index>/capture.json`
+anger källscenario/-variant, unik stimulusreferens och 19 stängda kanaler med
+digest, träffantal och säkra canary-/fältklasser. Även avsiktligt tomma kanaler
+är explicit öppnade/fångade och stängda; okända kanaler stoppar finalisering.
+De fem OBS-001-stimulusen ger 95 kontroller, och OBS-002 ytterligare 76.
+Faktiska externa felbytes samt separata konsolfångster för runner/server ingår.
+
+`telemetry/observations.jsonl` och `audit/observations.jsonl` har skilda writers
+och scheman. Audit använder ett eget id och en beslutreferens; telemetry
+refererar separat till detta id och en exporterad OTel-span. Profilversion och
+producentens faktiska policyversion kontrolleras, även `phase-2-local-deny-1.0.0`.
+`validation/phase-5.json` beräknas om från exporterade bytes vid validering;
+resultatfilens `pass` räcker inte. Tidigare Fas 3/4-orakel körs också om.
+
+Sex unika syntetiska representanter skapas för varje stimulus. Faktiskt
+materialiserade tokens, assertions, proofs, känsliga claims, payloadbytes och
+privatnyckelrepresentationer registreras dessutom. Tidigt nekande kan innebära
+att vissa klasser bara har sin representant. Scanner-conformance materialiserar
+case-, URL-, base64- och base64url-former; slutsatsen gäller dessa former.
+Canaryträffar ger `fail`: råbytes hålls i privat karantän och endast säkra
+träffuppgifter/digests exporteras. Saknad täckning eller ogiltig evidens ger
+`inconclusive`. Full omskanning kräver de privata per-stimulusregistren före stop.
+
+`run-suite --through-phase 4` finns kvar för exakt Fas 1–4:s 64 kombinationer.
+Fas 6 ska införa core-closeout och jämföra två rena körningar; `--class core`
+är ännu inte implementerat.
 
 Metadataålder (`ageMillis`) räknas från signerad `issuedAt`; cacheålder
 (`cacheAgeMillis`) från `fetchedAt`. Återhämtning av samma gamla revision

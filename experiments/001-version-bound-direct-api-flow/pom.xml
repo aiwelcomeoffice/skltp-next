@@ -7,8 +7,8 @@
   <groupId>se.skltpnext</groupId>
   <artifactId>experiment-001-version-bound-direct-api-flow</artifactId>
   <version>1.0.0-SNAPSHOT</version>
-  <name>SKLTP Next Experiment 001 - Phases 1-4</name>
-  <description>Isolated synthetic harness for Experiment 001 through Phase 4.</description>
+  <name>SKLTP Next Experiment 001 - Phases 1-5</name>
+  <description>Isolated synthetic harness for Experiment 001 through Phase 5.</description>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

@@ -1,0 +1,60 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "runId",
+    "scenarioId",
+    "variantId",
+    "dependency",
+    "attempts",
+    "result",
+    "durationBucket",
+    "durationMillis",
+    "timeoutMillis",
+    "retryBudgetMillis"
+  ],
+  "properties": {
+    "runId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scenarioId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "variantId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "dependency": {
+      "type": "string",
+      "minLength": 1
+    },
+    "attempts": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "result": {
+      "type": "string",
+      "minLength": 1
+    },
+    "durationBucket": {
+      "type": "string",
+      "minLength": 1
+    },
+    "durationMillis": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "timeoutMillis": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "retryBudgetMillis": {
+      "type": "integer",
+      "minimum": 0
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:skltp-next:experiment-001:channel-telemetry-dependencies-phase-5:1.0.0"
+}

@@ -64,7 +64,7 @@ public final class ExperimentCli {
 
     private static int runImplementedSuite(Map<String, String> options) {
         String phase = required(options, "through-phase");
-        if (!java.util.Set.of("3", "4").contains(phase)) throw new IllegalArgumentException("Implemented suite phases: 3, 4");
+        if (!java.util.Set.of("3", "4", "5").contains(phase)) throw new IllegalArgumentException("Implemented suite phases: 3, 4, 5");
         String runId = required(options, "run-id");
         var engine = new ScenarioEngine(ExperimentConfig.runtimeRoot(runId), runId);
         if (!engine.ready()) throw new IllegalStateException("Environment not ready");
@@ -72,7 +72,8 @@ public final class ExperimentCli {
         variants.addAll(ExperimentConfig.PHASE_1_VARIANTS.stream().sorted().toList());
         variants.addAll(ExperimentConfig.PHASE_2_VARIANTS.stream().sorted().toList());
         variants.addAll(ExperimentConfig.PHASE_3_VARIANTS.stream().sorted().toList());
-        if (phase.equals("4")) variants.addAll(ExperimentConfig.PHASE_4_VARIANTS.stream().sorted().toList());
+        if (Integer.parseInt(phase) >= 4) variants.addAll(ExperimentConfig.PHASE_4_VARIANTS.stream().sorted().toList());
+        if (phase.equals("5")) variants.addAll(ExperimentConfig.PHASE_5_VARIANTS.stream().sorted().toList());
         boolean passed = true;
         for (String key : variants) {
             String[] parts = key.split("/", 2);

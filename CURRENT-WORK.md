@@ -1,91 +1,54 @@
-# Experiment 001 – Fas 5: core observability and leakage
+# Experiment 001 – Fas 6: core closeout
 
 Uppdaterad: 2026-09-08. Status: `proposal`; implementation `not started`.
-Utgångsläge: [Fas 1–4 verifierade](PROJECT-STATE.md). Denna slice avgränsar
-nästa kodarbete; dokumentuppdateringen implementerar inte Fas 5.
+Utgångsläge: [Fas 1–5 verifierade](PROJECT-STATE.md), senast
+[Fas 5-rapporten](docs/experiments/001-version-bound-direct-api-flow-phase-5-report.md).
+Fas 5 omfattar 66/66 kombinationer och 53 gröna tester i en verifierad arbetskopia;
+hela Experiment 001 är fortfarande `not-classified`.
 
-**Specificerat – Experiment 001:** sammanfattningen följer
-[scenariomatrisen, avsnitt 5, och observabilitykraven, avsnitt 6](docs/experiments/001-version-bound-direct-api-flow.md#5-scenario--och-förväntansmatris)
-samt [implementationsplanens avsnitt 8–10](docs/experiments/001-version-bound-direct-api-flow-implementation-plan.md#8-spårbarhet-för-samtliga-18-core-scenarier).
-Dessa källor styr oraklen; inga nya teknik- eller arkitekturbeslut görs här.
+**Specificerat – Experiment 001:** denna slice följer
+[planens Fas 6 och avsnitt 10](docs/experiments/001-version-bound-direct-api-flow-implementation-plan.md#fas-6--core-closeout)
+och [specifikationens slutsats-/exitvillkor](docs/experiments/001-version-bound-direct-api-flow.md).
+Det är projektets experimentkrav, inte Inera-krav eller ett produktionsbeslut.
 
-## Scope och stimuli
+## Scope
 
-Implementera endast `E001-OBS-001/baseline` och `E001-OBS-002/baseline`.
-Varje OBS-scenario materialiserar sina egna stimuli, med återställning till
-känd fixturestate mellan dem. Tidigare scenarioresultat får inte konsumeras
-som ersättning för nya observationer.
-
-**OBS-001:** skanna läckage efter vart och ett av fem fasta källstimuli:
-
-- `E001-FLOW-001/baseline`
-- `E001-AUTHN-001/bad-signature`
-- `E001-TOK-001/wrong-issuer`
-- `E001-DPOP-001/resource-bad-signature`
-- `E001-CON-002/invalid-request`
-
-**OBS-002:** jämför fyra fasta källstimuli och deras separata beslut:
-
-| Källstimulus | Kategori | Beslutande aktör / kontrollpunkt |
-|---|---|---|
-| `E001-AUTHN-001/bad-signature` | `client_authentication` | AS / klientautentisering |
-| `E001-TOK-001/wrong-issuer` | `token_validation` | Producent / tokenvalidering |
-| `E001-SEC-002/baseline` | `sender_constraint` | Producent / DPoP-bindning |
-| `E001-AUTHZ-001/local-policy-deny` | `authorization` | Producent / lokal policy efter godkända credentials |
-
-Endast två nya byggare från extended får introduceras:
-`E001-AUTHN-001/bad-signature` (båda OBS-scenarierna) och
-`E001-DPOP-001/resource-bad-signature` (OBS-001). Återanvänd övriga befintliga
-stimulusbyggare. Registrera källscenario/-variant som proveniens inne i OBS;
-byggarna innebär inte att de fulla extended-scenarierna är implementerade,
-körda, `pass` eller `complete` och gör dem inte till core.
+- Koppla det planerade CLI-kommandot `run-suite --class core` till exakt de
+  befintliga 18 core-scenarierna och deras 66 obligatoriska kombinationer.
+  Kommandot är ännu inte implementerat; `--through-phase 5` finns.
+- Implementera minsta maskinella jämförelse och klassificering som Fas 6 kräver.
+  Jämför scenario-/variantstatus, terminala utfall och stabila beslutskategorier,
+  aktörer, orsaker och profil-/policy-/releaseversioner. Kryptografiska bytes,
+  run-/stimulus-/audit-/trace-id:n och hostberoende tider ska kunna skilja sig.
+  Varje pakets referensintegritet och tidsorakel ska ändå valideras separat.
+- Kör minst två rena, sekventiella core-körningar från samma källrevision med
+  olika run-id och nygenererade nycklar. Disa gör commit/push; agenten får inte
+  märka en arbetskopia som ren eller ersätta två rena körningar med Fas 5-evidens.
+- Samla full evidens, dokumentera slutsats och uppdatera state. Inga nya
+  scenario-/variant-id:n, kontrakt, releaseartefakter, parametrar eller timeouts.
 
 ## Acceptans och evidens
 
-- OBS-001: unika canaries för access token, assertion, DPoP-proof,
-  privat-nyckelrepresentant, känslig claim och payload. Skanna stängda råbytes
-  i samtliga telemetry-, externa fel-, audit-, scenarioresultat- och fångade
-  konsolkanaler för varje stimulus. Sök både förbjudna värden och fältnamn,
-  inklusive de case-/URL-/base64-varianter fixturegeneratorn materialiserar.
-  Kräv noll träffar och maskinläsbar fullständighet per stimulus/kanal.
-  Rapportera endast säkra canary-id:n, kanal/fältklass, fil-digest och antal
-  träffar; inga canaryvärden eller förbjudet innehåll i evidenspaketet.
-- OBS-002: de fyra kategorierna ska kunna särskiljas maskinellt med rätt
-  aktör, checkpoint, stabil orsak, profil-/policy- och releaseversion.
-  Telemetry och audit har separata writers, scheman och evidensreferenser;
-  kontrollera referensintegritet. Trace-id får inte bli audit-id eller
-  authorizationbevis; korrelation använder endast tillåtna syntetiska refs.
-- Bevisa oraklen med positiva och negativa kontroller: scanner-conformance,
-  avsiktlig canaryträff, saknat stimulus/kanal och fel kategori/aktör eller
-  sammanblandade referenser. Validera exporterad evidens oberoende av den
-  kodgren som fattar beslutet; komplett schema-, referens- och checksummevalidering.
-- Bevara Fas 1–4:s 64 kombinationer och orakel. Kör relevanta regressioner
-  och det kanoniska `./mvnw -B -ntp clean verify` från
-  [experimentmodulen](experiments/001-version-bound-direct-api-flow/README.md).
-  Följ dess runtime-/lagringskrav och CLI-livscykel; full canaryvalidering
-  görs före stop tar bort privat state. Dokumentera Fas 5:s körning, resultat,
-  begränsningar och slutsats i en ny rapport, länka den och uppdatera state.
-
-## Falsifiering och klassificeringsnyans
-
-OBS-001:s egenskap faller om credential-/payloadvärden läcker eller krävs för
-korrelation. OBS-002:s egenskap faller om felen inte kan skiljas, fel aktör
-tillskrivs beslutet eller trace, audit och authorization blandas ihop.
-Giltiga avvikelser ger `fail`; reproducerbar falsifiering måste skiljas från
-harness-/fixturefel och bekräftas med ren omkörning enligt planens avsnitt 10.
-
-**Tolkning av en befintlig textspänning:** scenariomatrisen listar också
-saknad kanal/stimulus under falsifiering. Specifikationens avsnitt 1 och 6
-och planens avsnitt 8 och 10 anger däremot `inconclusive` vid otillräcklig
-evidens. Saknad föreskriven täckning kan därför aldrig ge `pass` och är inte
-i sig arkitekturfalsifiering. Bevara denna skillnad när Fas 5-oraklet byggs;
-historiska krav och resultat ändras inte av sammanfattningen.
+1. Följ modulens [runtime-/lagringskrav och CLI-livscykel](experiments/001-version-bound-direct-api-flow/README.md).
+   Kör kanonisk `./mvnw -B -ntp clean verify` för kodändringar och relevanta
+   positiva/negativa kontroller av core-urval, jämförelse och klassificering.
+2. Båda körningarna ska ha fullständiga, schema-/referens-/checksummevaliderade
+   paket och oberoende observationsorakel, inklusive OBS-001/002 och varje
+   stimulus/kanal. Full canaryvalidering sker före respektive stop.
+3. Bevara paketen och jämförelsens maskinella underlag. Jämför stabila resultat
+   trots skilda nycklar och bytes; saknad evidens eller oförklarad variation får
+   aldrig ge `styrkt`.
+4. Klassificera enligt planens avsnitt 10: `styrkt`, `falsifierad` eller
+   `inkonklusiv`. Falsifiering måste vara giltig och bestå vid ren omkörning;
+   harness-/fixturefel och oskiljbara timeoutförlopp är otillräcklig evidens.
+5. Skapa en ny core-closeout-rapport. Uppdatera `PROJECT-STATE.md` och ersätt
+   aktuell slice med exakt nästa verifierbara arbete. Historiska rapporter och
+   accepterade orakel bevaras.
 
 ## Utanför slicen
 
-Inga nya scenario-/variant-id:n, ändrade kontrakt, releaseartefakter,
-parametrar, timeouts eller tidigare orakel. Inga fulla AUTHN-/DPoP-extended,
-CON-003 eller OBS-003/004. Fas 6:s två rena core-körningar och hela
-experimentets slutklassificering återstår; Fas 5 får inte ensam ge `styrkt`.
-Ingen extern IdP/katalog, produktionsprofil, ny plattform, central gateway,
-researchomstart eller ADR utan en konkret ny fråga som motiverar det.
+Inga nya scenarier, fulla AUTHN-/DPoP-extended, CON-003 eller OBS-003/004.
+Ingen ny plattform, extern IdP/katalog, produktionsprofil, arkitekturomläggning,
+dependencyuppgradering eller researchomstart utan en konkret blockerande fråga.
+Fas 7 extended blir aktuell först efter core closeout; ett lyckat core-resultat
+är fortfarande lokal experimentell evidens, inte ett långlivat arkitekturbeslut.

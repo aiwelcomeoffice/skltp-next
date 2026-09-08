@@ -1,0 +1,129 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "scenarios"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "5.0.0"
+    },
+    "scenarios": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "E001-OBS-001",
+        "E001-OBS-002"
+      ],
+      "properties": {
+        "E001-OBS-001": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "sourceScenarioId",
+              "sourceVariantId",
+              "category",
+              "actor",
+              "checkpoint",
+              "reason",
+              "httpStatus",
+              "policyVersion"
+            ],
+            "properties": {
+              "sourceScenarioId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "sourceVariantId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "category": {
+                "type": "string",
+                "minLength": 1
+              },
+              "actor": {
+                "type": "string",
+                "minLength": 1
+              },
+              "checkpoint": {
+                "type": "string",
+                "minLength": 1
+              },
+              "reason": {
+                "type": "string",
+                "minLength": 1
+              },
+              "httpStatus": {
+                "type": "integer"
+              },
+              "policyVersion": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "minItems": 5,
+          "maxItems": 5
+        },
+        "E001-OBS-002": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "sourceScenarioId",
+              "sourceVariantId",
+              "category",
+              "actor",
+              "checkpoint",
+              "reason",
+              "httpStatus",
+              "policyVersion"
+            ],
+            "properties": {
+              "sourceScenarioId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "sourceVariantId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "category": {
+                "type": "string",
+                "minLength": 1
+              },
+              "actor": {
+                "type": "string",
+                "minLength": 1
+              },
+              "checkpoint": {
+                "type": "string",
+                "minLength": 1
+              },
+              "reason": {
+                "type": "string",
+                "minLength": 1
+              },
+              "httpStatus": {
+                "type": "integer"
+              },
+              "policyVersion": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "minItems": 4,
+          "maxItems": 4
+        }
+      }
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:skltp-next:experiment-001:catalog-phase-5:1.0.0"
+}

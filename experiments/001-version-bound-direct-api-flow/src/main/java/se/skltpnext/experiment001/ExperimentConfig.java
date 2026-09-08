@@ -92,6 +92,7 @@ public final class ExperimentConfig {
             "E001-CON-002/invalid-response", "E001-CON-002/undocumented-error",
             "E001-CON-002/problem-details-internal-detail", "E001-DEP-001/token-slow",
             "E001-DEP-001/token-unavailable", "E001-DEP-001/producer-slow", "E001-DEP-001/producer-unavailable");
+    public static final Set<String> PHASE_5_VARIANTS = Set.of("E001-OBS-001/baseline", "E001-OBS-002/baseline");
     public static final Set<String> IMPLEMENTED_VARIANTS;
 
     static {
@@ -99,6 +100,7 @@ public final class ExperimentConfig {
         variants.addAll(PHASE_2_VARIANTS);
         variants.addAll(PHASE_3_VARIANTS);
         variants.addAll(PHASE_4_VARIANTS);
+        variants.addAll(PHASE_5_VARIANTS);
         IMPLEMENTED_VARIANTS = Set.copyOf(variants);
     }
 

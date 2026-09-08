@@ -2,7 +2,7 @@
 
 - **Status:** experimental
 - **Senast sakgranskad:** 2026-08-22; implementationsstatus uppdaterad 2026-09-08
-- **Implementation:** Fas 1 verifierad 2026-08-18, Fas 2 verifierad 2026-08-22, Fas 3 verifierad 2026-09-07 och Fas 4 verifierad 2026-09-08; Fas 5–7 inte påbörjade
+- **Implementation:** Fas 1 verifierad 2026-08-18, Fas 2 verifierad 2026-08-22, Fas 3 verifierad 2026-09-07 Fas 4 verifierad 2026-09-08 och Fas 5 verifierad 2026-09-08; Fas 6–7 inte påbörjade
 - **Dokumenttyp:** produkt- och implementationsneutral experimentspecifikation
 - **Styrande underlag:** [Syntes 001](../architecture/001-research-synthesis-and-first-experiment-hypothesis.md)
 
@@ -795,8 +795,9 @@ Följande ska fortfarande hållas öppna efter denna specifikation:
 ### Rekommenderad nästa enda arbetsuppgift
 
 [Implementationsplanens](001-version-bound-direct-api-flow-implementation-plan.md)
-Fas 1–4 är verifierade. Se [Fas 4-slutrapporten](001-version-bound-direct-api-flow-phase-4-report.md)
-för de nio Fas 4-varianterna, 64/64 regressioner, evidenspaket och lokala
-begränsningar. Nästa enda steg är att granska och avgränsa planens **Fas 5**.
-Fas 5–7 är inte påbörjade och hela Experiment 001 är fortsatt `not-classified`.
-Ursprungliga scenarier och orakel ändras inte av denna statusuppdatering.
+Fas 1–5 är verifierade. Se [Fas 5-rapporten](001-version-bound-direct-api-flow-phase-5-report.md)
+för 66/66 kombinationer, oberoende OBS-evidens, noll läckageträffar och lokala
+begränsningar. Nästa enda steg är **Fas 6 core closeout**, avgränsat i
+[CURRENT-WORK.md](../../CURRENT-WORK.md): två rena sekventiella core-körningar,
+jämförelse av stabila resultat och slutklassificering. Fas 6–7 är inte påbörjade
+och hela Experiment 001 är fortsatt `not-classified`.

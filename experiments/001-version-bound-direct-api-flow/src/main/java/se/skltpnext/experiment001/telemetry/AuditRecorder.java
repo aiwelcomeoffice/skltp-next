@@ -13,6 +13,7 @@ public final class AuditRecorder {
         audit.put("auditRecordId", id); audit.put("decisionRef", decisionRef);
         audit.put("organizationRef", "ORG_A"); audit.put("systemRef", "SYSTEM_A"); audit.put("clientRef", "CLIENT_A");
         audit.put("recordedAt", Instant.now().toString());
+        ObservationContext.guard(root, audit);
         JsonSupport.validateResource("experiment-001/schemas/audit-phase-5.schema.json",
                 JsonSupport.MAPPER.valueToTree(audit), "OBS audit");
         JsonSupport.appendJsonLine(root.resolve("events/audit/observations.jsonl"), audit);

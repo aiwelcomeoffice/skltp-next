@@ -1,0 +1,105 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "runId",
+    "stimulusRef",
+    "sourceScenarioId",
+    "sourceVariantId",
+    "scenarioId",
+    "variantId",
+    "fixtureValid",
+    "channels"
+  ],
+  "properties": {
+    "runId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "stimulusRef": {
+      "type": "string",
+      "pattern": "^STIMULUS-[a-f0-9-]{36}$"
+    },
+    "sourceScenarioId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sourceVariantId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scenarioId": {
+      "enum": [
+        "E001-OBS-001",
+        "E001-OBS-002"
+      ]
+    },
+    "variantId": {
+      "const": "baseline"
+    },
+    "fixtureValid": {
+      "type": "boolean"
+    },
+    "channels": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "channel",
+          "sha256",
+          "hitCount",
+          "findings",
+          "exported"
+        ],
+        "properties": {
+          "channel": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "hitCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "canaryId",
+                "fieldClass",
+                "hitCount"
+              ],
+              "properties": {
+                "canaryId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "fieldClass": {
+                  "enum": [
+                    "forbidden-field",
+                    "forbidden-value"
+                  ]
+                },
+                "hitCount": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            }
+          },
+          "exported": {
+            "type": "boolean"
+          }
+        }
+      }
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:skltp-next:experiment-001:capture-phase-5:1.0.0"
+}

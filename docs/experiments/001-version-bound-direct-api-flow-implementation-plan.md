@@ -3,7 +3,7 @@
 - **Status:** experimental
 - **Datum:** 2026-08-17
 - **Senast uppdaterad:** 2026-09-08
-- **Implementation:** Fas 1 verifierad 2026-08-18; Fas 2 verifierad 2026-08-22; Fas 3 verifierad 2026-09-07 (se [slutrapport](001-version-bound-direct-api-flow-phase-3-report.md)); Fas 4 verifierad 2026-09-08 (se [slutrapport](001-version-bound-direct-api-flow-phase-4-report.md)); Fas 5–7 inte påbörjade
+- **Implementation:** Fas 1 verifierad 2026-08-18; Fas 2 verifierad 2026-08-22; Fas 3 verifierad 2026-09-07 (se [slutrapport](001-version-bound-direct-api-flow-phase-3-report.md)); Fas 4 verifierad 2026-09-08 (se [slutrapport](001-version-bound-direct-api-flow-phase-4-report.md)); Fas 5 verifierad 2026-09-08 (se [rapport](001-version-bound-direct-api-flow-phase-5-report.md)); Fas 6–7 inte påbörjade
 - **Planerar:** [Experiment Specification 001](001-version-bound-direct-api-flow.md)
 - **Styrande syntes:** [Syntes 001](../architecture/001-research-synthesis-and-first-experiment-hypothesis.md)
 - **Beslutsräckvidd:** endast den syntetiska experimentharnessen
@@ -714,6 +714,12 @@ stimulusbyggare från `E001-AUTHN-001/bad-signature` och
 uttryckligen återanvänder. De körs självständigt inuti OBS-scenariot och
 rapporteras inte som genomförda extended-scenarier.
 
+Fas 5 är implementerad och verifierad 2026-09-08: två nya kombinationer,
+nio självständiga stimulusmaterialiseringar och 171 kanalobservationer.
+66/66 kombinationer och 53 tester passerade; full CLI-livscykel och oberoende
+paketvalidering är godkända. Se [Fas 5-rapporten](001-version-bound-direct-api-flow-phase-5-report.md).
+Slutkörningen är en verifierad arbetskopia; hela experimentet är inte klassificerat.
+
 ### Fas 6 – core closeout
 
 Kör `run-suite --class core` i minst två rena, sekventiella körningar med
@@ -974,20 +980,16 @@ Alla externa källor nedan lästes 2026-08-17. Lokala researchdokument
 
 ## Implementationsstatus och nästa enda steg
 
-Fas 1–4 är verifierade inom den lokala syntetiska harnessen. Den avgörande
-slutkörningen på `f613ac2` gav 64/64 kombinationer och ett komplett evidenspaket;
-49 tester passerade i `./mvnw -B -ntp clean verify`. Se
-[Fas 4-rapporten](001-version-bound-direct-api-flow-phase-4-report.md) för
-kontraktsbeslut, dependencyfel, sena svar, återställning och begränsningar.
+Fas 1–5 är verifierade inom den lokala syntetiska harnessen. Fas 5-körningen
+`phase5-final-20260908` gav 66/66 kombinationer och ett komplett,
+oberoende validerat evidenspaket; 53 tester passerade i kanonisk `clean verify`.
+Se [Fas 5-rapporten](001-version-bound-direct-api-flow-phase-5-report.md) för
+arbetskopians källbas/digest, OBS-stimuli, kategoriseparation och begränsningar.
+Tidigare fasrapporter bevaras som historiska observationer.
 
-Tidigare [Fas 1](001-version-bound-direct-api-flow-phase-1-report.md),
-[Fas 2](001-version-bound-direct-api-flow-phase-2-report.md),
-[Fas 3](001-version-bound-direct-api-flow-phase-3-report.md),
-[release-delrapport](001-version-bound-direct-api-flow-phase-3-release-report.md)
-och [Fas 3b1](001-version-bound-direct-api-flow-phase-3b1-report.md) bevaras
-som historiska observationer.
-
-Nästa enda steg är att granska och avgränsa **Fas 5** mot det verifierade
-Fas 1–4-underlaget. Fas 5–7 är inte påbörjade; hela Experiment 001 är fortsatt
-`not-classified`. Statusuppdateringen ändrar inte fasernas ursprungliga orakel
-eller innebär ett produktionsbeslut.
+Nästa enda steg är **Fas 6 core closeout**, avgränsat i
+[CURRENT-WORK.md](../../CURRENT-WORK.md): två rena sekventiella körningar,
+stabila resultat trots nya kryptografiska bytes och slutklassificering.
+Fas 6–7 är inte påbörjade; hela Experiment 001 är fortsatt `not-classified`.
+Statusuppdateringen ändrar inte fasernas ursprungliga orakel eller innebär ett
+produktionsbeslut.

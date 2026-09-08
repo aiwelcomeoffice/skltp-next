@@ -19,6 +19,21 @@ public final class ObservationContext {
                 status + "\n" + body + "\n" + challenge + "\n", StandardOpenOption.APPEND);
     }
 
+    public static void guard(Path root, Map<String, Object> row) {
+        if (read(root) == null) return;
+        try {
+            String text = JsonSupport.compact(row);
+            for (String line : Files.readAllLines(root.resolve("private/canaries.jsonl"))) {
+                if (line.isBlank()) continue;
+                var canary = JsonSupport.MAPPER.readTree(line);
+                for (String value : se.skltpnext.experiment001.evidence.ObservationScanner.representations(canary.required("value").asText()))
+                    if (text.contains(value)) throw new IllegalArgumentException("Canary rejected by safe writer");
+            }
+        } catch (java.io.IOException e) { throw new IllegalStateException("Cannot read safe-writer registry", e); }
+        catch (RuntimeException e) { throw e; }
+        catch (Exception e) { throw new IllegalStateException("Cannot validate safe writer input", e); }
+    }
+
     public static Map<String, Object> common(JsonNode context, String run, String actor,
                                              String checkpoint, String category, String result, String reason,
                                              String policy) {

@@ -55,6 +55,8 @@ public final class ScenarioEngine {
         }
         resetForScenario(scenarioId, variantId);
         try {
+            if (ExperimentConfig.PHASE_5_VARIANTS.contains(key))
+                return new PhaseFiveScenarioRunner(runtimeRoot, runId).run(scenarioId);
             if (ExperimentConfig.PHASE_4_VARIANTS.contains(key))
                 return new PhaseFourScenarioRunner(runtimeRoot, runId).run(scenarioId, variantId);
             ScenarioResult result = switch (key) {
@@ -76,6 +78,8 @@ public final class ScenarioEngine {
             return result;
         } catch (Exception e) {
             recordSafeHarnessFailure(scenarioId, variantId, e);
+            if (ExperimentConfig.PHASE_5_VARIANTS.contains(key))
+                return PhaseFiveScenarioRunner.result(runtimeRoot, runId, scenarioId, "inconclusive");
             if (ExperimentConfig.PHASE_4_VARIANTS.contains(key)) {
                 return PhaseFourScenarioRunner.inconclusive(runtimeRoot, runId, scenarioId, variantId);
             }

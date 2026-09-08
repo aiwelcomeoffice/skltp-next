@@ -146,6 +146,7 @@ public final class TelemetryRecorder implements AutoCloseable {
         if ("authorization".equals(category)) {
             event.put("policyVersion", policyVersion);
         }
+        ObservationContext.guard(runtimeRoot, event);
         writeAllowlisted(runtimeRoot.resolve("events/telemetry/decisions.jsonl"), event, DECISION_FIELDS);
         var observation = ObservationContext.read(runtimeRoot);
         if (observation != null && Set.of("client_authentication", "token_validation", "sender_constraint", "authorization").contains(category)) {
@@ -216,6 +217,7 @@ public final class TelemetryRecorder implements AutoCloseable {
         event.put("durationMillis", durationMillis);
         event.put("timeoutMillis", Set.of("service", "membership", "iam").contains(dependency) ? 100 : 300);
         event.put("retryBudgetMillis", 350);
+        ObservationContext.guard(runtimeRoot, event);
         JsonSupport.appendJsonLine(runtimeRoot.resolve("events/telemetry/dependencies.jsonl"), event);
     }
 

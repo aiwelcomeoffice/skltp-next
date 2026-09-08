@@ -1,0 +1,54 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "runId",
+    "scenarioId",
+    "variantId",
+    "sender",
+    "receiver",
+    "listenerId",
+    "method",
+    "pathTemplate",
+    "apiDataReceived"
+  ],
+  "properties": {
+    "runId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scenarioId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "variantId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sender": {
+      "type": "string",
+      "minLength": 1
+    },
+    "receiver": {
+      "type": "string",
+      "minLength": 1
+    },
+    "listenerId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "method": {
+      "type": "string",
+      "minLength": 1
+    },
+    "pathTemplate": {
+      "type": "string",
+      "minLength": 1
+    },
+    "apiDataReceived": {
+      "type": "boolean"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:skltp-next:experiment-001:channel-network-payload-call-ledger-phase-5:1.0.0"
+}

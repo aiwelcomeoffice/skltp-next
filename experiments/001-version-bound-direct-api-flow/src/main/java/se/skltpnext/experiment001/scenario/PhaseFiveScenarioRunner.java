@@ -23,8 +23,8 @@ public final class PhaseFiveScenarioRunner {
         for (String name : List.of("events", "results"))
             if (Files.exists(root.resolve(name))) Files.move(root.resolve(name), backup.resolve(name));
         Path output = root.resolve("phase-5/" + scenario);
-        EvidenceCollector.deleteTree(output);
         try {
+            removeGenerated(output);
             int index = 0;
             // The stimulus list is fixed here; the independent validator owns the expected table.
             List<String> stimuli = scenario.equals("E001-OBS-001") ? List.of(
@@ -37,7 +37,7 @@ public final class PhaseFiveScenarioRunner {
             Files.deleteIfExists(root.resolve("private/observation-context.json"));
             engine.reset();
             for (String name : List.of("events", "results")) {
-                EvidenceCollector.deleteTree(root.resolve(name));
+                removeGenerated(root.resolve(name));
                 if (Files.exists(backup.resolve(name))) Files.move(backup.resolve(name), root.resolve(name));
             }
             Files.delete(backup);
@@ -48,9 +48,9 @@ public final class PhaseFiveScenarioRunner {
 
     private void capture(ScenarioEngine engine, String scenario, String source, int index, Path output) throws Exception {
         engine.reset();
-        for (String name : List.of("events", "results")) EvidenceCollector.deleteTree(root.resolve(name));
+        for (String name : List.of("events", "results")) removeGenerated(root.resolve(name));
         for (String channel : PhaseFiveEvidence.CHANNELS) {
-            if (channel.startsWith("console/") || channel.equals("stimulus-result.json")) continue;
+            if (channel.startsWith("console/") || channel.equals("stimulus-result.json") || channel.equals("results/source.json")) continue;
             Path file = root.resolve("events/" + channel);
             Files.createDirectories(file.getParent()); Files.write(file, new byte[0]);
         }
@@ -83,9 +83,27 @@ public final class PhaseFiveScenarioRunner {
         Files.createDirectories(privateRegistry.getParent());
         byte[] allCanaries = Files.readAllBytes(registry);
         Files.write(privateRegistry, Arrays.copyOfRange(allCanaries, (int) canaryStart, allCanaries.length));
+        // Also scan actual per-run private-key encodings, beyond the unique stimulus representative.
+        for (String line : Files.readString(registry).lines().toList()) if (!line.isBlank()) {
+            var canary = JsonSupport.MAPPER.readTree(line);
+            if (canary.path("type").asText().equals("private_key"))
+                Files.writeString(privateRegistry, line + "\n", StandardOpenOption.APPEND);
+        }
         Path sourceResult = root.resolve("events/stimulus-result.json");
         JsonSupport.writeJson(sourceResult, Map.of("runId", run, "stimulusRef", ref,
                 "sourceScenarioId", parts[0], "sourceVariantId", parts[1], "fixtureValid", fixtureValid));
+        Path resultFile = root.resolve("results/" + parts[0] + "--" + parts[1] + ".json");
+        Path sourceResultCopy = root.resolve("events/results/source.json");
+        Files.createDirectories(sourceResultCopy.getParent());
+        Files.copy(Files.isRegularFile(resultFile) ? resultFile : sourceResult, sourceResultCopy);
+        try (var files = Files.walk(root.resolve("events"))) {
+            Set<String> actual = files.filter(Files::isRegularFile)
+                    .map(file -> root.resolve("events").relativize(file).toString().replace('\\', '/'))
+                    .collect(java.util.stream.Collectors.toSet());
+            Set<String> expected = PhaseFiveEvidence.CHANNELS.stream().filter(name -> !name.startsWith("console/"))
+                    .collect(java.util.stream.Collectors.toSet());
+            if (!actual.equals(expected)) throw new IllegalStateException("Uncovered observation channel");
+        }
         List<Map<String, Object>> channels = new ArrayList<>();
         for (String channel : PhaseFiveEvidence.CHANNELS) {
             Path file = root.resolve("events/" + channel);
@@ -100,6 +118,10 @@ public final class PhaseFiveScenarioRunner {
             Path exported = target.resolve(channel);
             // Never export forbidden bytes, even on a valid falsification.
             if (hits == 0) { Files.createDirectories(exported.getParent()); Files.copy(file, exported); }
+            else {
+                Path quarantine = root.resolve("private/observation-quarantine/" + ref).resolve(channel);
+                Files.createDirectories(quarantine.getParent()); Files.copy(file, quarantine);
+            }
             channels.add(Map.of("channel", channel, "sha256", JsonSupport.sha256(file), "hitCount", hits,
                     "findings", findings, "exported", hits == 0));
         }
@@ -109,21 +131,32 @@ public final class PhaseFiveScenarioRunner {
         JsonSupport.writeJson(target.resolve("capture.json"), observation);
     }
 
+    private void removeGenerated(Path directory) throws Exception {
+        if (!directory.equals(root.resolve("events")) && !directory.equals(root.resolve("results"))
+                && !directory.equals(root.resolve("phase-5/E001-OBS-001"))
+                && !directory.equals(root.resolve("phase-5/E001-OBS-002")))
+            throw new IllegalArgumentException("Not an OBS-owned generated directory");
+        if (Files.exists(directory)) try (var files = Files.walk(directory)) {
+            for (Path path : files.sorted(Comparator.reverseOrder()).toList()) Files.delete(path);
+        }
+    }
+
     private boolean materialize(ScenarioEngine engine, String scenario, String variant) {
         if (ExperimentConfig.IMPLEMENTED_VARIANTS.contains(scenario + "/" + variant))
-            return engine.run(scenario, variant).passed();
+            // A completed, unexpected response is valid observational input, not missing evidence.
+            return !engine.run(scenario, variant).status().equals("inconclusive");
         var stimulus = scenario.equals("E001-AUTHN-001") ? Consumer.ObservationStimulus.BAD_ASSERTION_SIGNATURE
                 : Consumer.ObservationStimulus.BAD_RESOURCE_SIGNATURE;
         var consumer = new Consumer(root, run, false, stimulus);
         var discovery = new MetadataStores(root).discover();
         try {
             var token = consumer.obtainToken(scenario, variant, discovery, Consumer.TokenKind.DPOP, ExperimentConfig.SCOPE_READ);
-            if (stimulus == Consumer.ObservationStimulus.BAD_ASSERTION_SIGNATURE) return false;
+            if (stimulus == Consumer.ObservationStimulus.BAD_ASSERTION_SIGNATURE) return true;
             var response = consumer.callResource(scenario, variant, discovery, "DPoP", token.value(),
                     CryptoMaterial.load(root).dpopKey(), "consumer-a");
-            return response.status() == 401 && response.contractValidated();
+            return true; // The independent oracle checks the actual denial/status/checkpoint.
         } catch (Consumer.TokenRequestDenied denied) {
-            return stimulus == Consumer.ObservationStimulus.BAD_ASSERTION_SIGNATURE && denied.status() == 401;
+            return stimulus == Consumer.ObservationStimulus.BAD_ASSERTION_SIGNATURE;
         }
     }
 
