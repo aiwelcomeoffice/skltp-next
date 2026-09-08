@@ -15,12 +15,42 @@ säker, observerbar, testbar och cloud-native utan att vara bunden till en viss
 produkt eller leverantör. REST/OpenAPI-first är projektets designval och får
 inte tillskrivas T2 som ett generellt krav.
 
-Repot är vid detta dokuments införande ett startläge med endast `README.md` och
-Apache-2.0-licens. Det finns ännu ingen beslutad programmeringsstack,
-komponentindelning, byggkedja eller driftplattform. Behandla därför strukturen
-och teknikexemplen nedan som riktlinjer, inte som redan fattade beslut. Inför
-inte ett teknikval enbart genom att börja använda tekniken; underbygg större val
+Aktuellt implementationsläge och verifierad evidens finns i
+[PROJECT-STATE.md](PROJECT-STATE.md). Experimentets lokala teknikval är inte
+beslut om produktionsstack eller målarkitektur. Behandla strukturen och
+teknikexemplen nedan som riktlinjer, inte som redan fattade beslut. Inför inte
+ett teknikval enbart genom att börja använda tekniken; underbygg större val
 med research, ett avgränsat experiment och vid behov en ADR.
+
+## Kontextladdning och operativt minne
+
+Normal läsordning för varje arbetsslice:
+
+1. Läs `AGENTS.md` och tillämpliga lokala instruktioner.
+2. Läs [PROJECT-STATE.md](PROJECT-STATE.md) för kort, aktuell operativ state.
+3. Läs [CURRENT-WORK.md](CURRENT-WORK.md) för aktuell slice och dess gränser.
+4. Läs därefter endast filer som direkt behövs för uppgiften.
+5. Läs historisk research, gamla fasrapporter eller bredare arkitekturdokument
+   endast när en konkret osäkerhet kräver det; följ den relevanta källänken.
+
+Återforska inte rutinmässigt redan verifierat underlag inför varje
+implementationsslice. Gör aktuell research när externa fakta kan ha ändrats
+och påverkar uppgiften, en verklig kunskapslucka identifieras eller ett större
+arkitekturbeslut kräver nytt underlag. Detta ändrar inte kraven på källkritik.
+
+`PROJECT-STATE.md` sammanfattar status, evidensens räckvidd, öppna frågor och
+nästa arbete. `CURRENT-WORK.md` innehåller endast aktuell slice; ersätt dess
+innehåll när nästa slice blir aktuell. Detaljerad evidens och historik bevaras
+i länkade rapporter. Research och ADR används när frågan kräver dem.
+
+Uppdatera båda minnesfilerna vid sliceavslut eller ändrat scope/status, med
+datum, slutsats och länkar till kanoniskt underlag. Duplicera inte rapporter
+eller bygg historik i minnesfilerna. Vid motstridiga uppgifter: kontrollera
+berört källdokument och redovisa avvikelsen; en sammanfattning får inte ändra
+scenarioorakel eller accepterad evidens. Håll **Specificerat** (med utgivare),
+**Tolkning**, **SKLTP Next-förslag**, **verifierad experimentell evidens** och
+**långlivat arkitekturbeslut** åtskilda. Det sista kräver en accepterad ADR;
+ett lyckat experiment eller en minnesuppdatering är inte ett sådant beslut.
 
 ## Styrande principer
 
@@ -124,7 +154,16 @@ Tidiga researchspår bör omfatta:
 
 ## Arbetsflöde för förändringar
 
-För större delar är normalflödet:
+För en avgränsad slice är standardloopen:
+
+`state -> current slice -> implement -> test -> evidence -> conclusion -> update state`
+
+Anpassa implementation och kontroller till uppgiften; en dokumentändring
+kräver normalt dokumentkontroller. Spara tillräcklig evidens för slutsatsen
+och länka den från operativ state. Större research och ADR aktiveras vid behov,
+inte automatiskt för varje liten förändring.
+
+För större delar gäller fortsatt:
 
 `research -> problem -> krav/invariants -> alternativ -> trade-offs -> beslut
 eller experiment -> implementation -> test -> validering -> dokumenterad
@@ -301,9 +340,10 @@ lokalt och i automatiska integrationstest.
 
 ## Dokumentstruktur och dokumentstatus
 
-Eftersom repot ännu saknar etablerad struktur rekommenderas följande som
-startpunkt. Skapa bara mappar när de får faktiskt innehåll och ändra strukturen
-genom ett medvetet beslut när projektet växer.
+Följande är riktlinjer för dokument- och produktionsstruktur, inte en
+inventering av aktuellt repo. Experimentkod kan ligga isolerat under
+`experiments/`. Skapa bara mappar när de får faktiskt innehåll och ändra
+strukturen genom ett medvetet beslut när projektet växer.
 
 ```text
 docs/
