@@ -1,8 +1,8 @@
 # Experiment 001 – Versionsbundet direkt M2M-API-flöde
 
 - **Status:** experimental
-- **Senast sakgranskad:** 2026-08-22; implementationsstatus uppdaterad 2026-09-07
-- **Implementation:** Fas 1 verifierad 2026-08-18, Fas 2 verifierad 2026-08-22 och Fas 3 verifierad 2026-09-07; Fas 4–7 inte påbörjade
+- **Senast sakgranskad:** 2026-08-22; implementationsstatus uppdaterad 2026-09-08
+- **Implementation:** Fas 1 verifierad 2026-08-18, Fas 2 verifierad 2026-08-22, Fas 3 verifierad 2026-09-07 och Fas 4 verifierad 2026-09-08; Fas 5–7 inte påbörjade
 - **Dokumenttyp:** produkt- och implementationsneutral experimentspecifikation
 - **Styrande underlag:** [Syntes 001](../architecture/001-research-synthesis-and-first-experiment-hypothesis.md)
 
@@ -795,9 +795,8 @@ Följande ska fortfarande hållas öppna efter denna specifikation:
 ### Rekommenderad nästa enda arbetsuppgift
 
 [Implementationsplanens](001-version-bound-direct-api-flow-implementation-plan.md)
-Fas 1–3 är verifierade. Se [Fas 3-slutrapporten](001-version-bound-direct-api-flow-phase-3-report.md)
-för samtliga 35 Fas 3-kombinationer, 55/55 regressioner, evidenspaket och
-lokala begränsningar. Nästa enda steg är att granska och avgränsa planens
-**Fas 4 – kontrakts- och dependencyfel**. Fas 4–7 är inte påbörjade och
-hela Experiment 001 är ännu inte klassificerat. Ursprungliga scenarier och
-orakel ändras inte av denna statusuppdatering.
+Fas 1–4 är verifierade. Se [Fas 4-slutrapporten](001-version-bound-direct-api-flow-phase-4-report.md)
+för de nio Fas 4-varianterna, 64/64 regressioner, evidenspaket och lokala
+begränsningar. Nästa enda steg är att granska och avgränsa planens **Fas 5**.
+Fas 5–7 är inte påbörjade och hela Experiment 001 är fortsatt `not-classified`.
+Ursprungliga scenarier och orakel ändras inte av denna statusuppdatering.

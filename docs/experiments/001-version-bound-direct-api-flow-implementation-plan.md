@@ -2,8 +2,8 @@
 
 - **Status:** experimental
 - **Datum:** 2026-08-17
-- **Senast uppdaterad:** 2026-08-22
-- **Implementation:** Fas 1 verifierad 2026-08-18; Fas 2 verifierad 2026-08-22; Fas 3 verifierad 2026-09-07 (se [slutrapport](001-version-bound-direct-api-flow-phase-3-report.md)); Fas 4–7 inte påbörjade
+- **Senast uppdaterad:** 2026-09-08
+- **Implementation:** Fas 1 verifierad 2026-08-18; Fas 2 verifierad 2026-08-22; Fas 3 verifierad 2026-09-07 (se [slutrapport](001-version-bound-direct-api-flow-phase-3-report.md)); Fas 4 verifierad 2026-09-08 (se [slutrapport](001-version-bound-direct-api-flow-phase-4-report.md)); Fas 5–7 inte påbörjade
 - **Planerar:** [Experiment Specification 001](001-version-bound-direct-api-flow.md)
 - **Styrande syntes:** [Syntes 001](../architecture/001-research-synthesis-and-first-experiment-hypothesis.md)
 - **Beslutsräckvidd:** endast den syntetiska experimentharnessen
@@ -701,6 +701,11 @@ små konfigurationer i AS/producer-testdubblarna, inte proxyer eller gateways.
 Verifiera att sent svar inte kan ändra finaliserat resultat och att inga
 retries sker.
 
+Fas 4 är implementerad och verifierad 2026-09-08: 9/9 nya kombinationer,
+64/64 Fas 1–4-regressioner, 49 tester utan fel samt full CLI-livscykel med
+godkänd evidensvalidering. Se [Fas 4-rapporten](001-version-bound-direct-api-flow-phase-4-report.md).
+Timeouts, kontrakt och tidigare orakel är oförändrade.
+
 ### Fas 5 – core-observability och leakage
 
 Implementera `E001-OBS-001` och `E001-OBS-002`. Skapa då bara de
@@ -969,19 +974,20 @@ Alla externa källor nedan lästes 2026-08-17. Lokala researchdokument
 
 ## Implementationsstatus och nästa enda steg
 
-Fas 1, Fas 2 och hela Fas 3 är verifierade inom den lokala syntetiska
-harnessen. Se [Fas 1](001-version-bound-direct-api-flow-phase-1-report.md),
-[Fas 2](001-version-bound-direct-api-flow-phase-2-report.md) och den
-[sammanhållna Fas 3-rapporten](001-version-bound-direct-api-flow-phase-3-report.md).
-Fas 3:s 35 kombinationer och hela regressionens 55 kombinationer passerar.
-Slutrapporten dokumenterar cache-/revisionsmodellen, verifierade
-beslutspunkter, evidenskontroller och kravet på lokal Linux-lagring för
-CLI-körningens pinnade tidsgränser. Tidigare
+Fas 1–4 är verifierade inom den lokala syntetiska harnessen. Den avgörande
+slutkörningen på `f613ac2` gav 64/64 kombinationer och ett komplett evidenspaket;
+49 tester passerade i `./mvnw -B -ntp clean verify`. Se
+[Fas 4-rapporten](001-version-bound-direct-api-flow-phase-4-report.md) för
+kontraktsbeslut, dependencyfel, sena svar, återställning och begränsningar.
+
+Tidigare [Fas 1](001-version-bound-direct-api-flow-phase-1-report.md),
+[Fas 2](001-version-bound-direct-api-flow-phase-2-report.md),
+[Fas 3](001-version-bound-direct-api-flow-phase-3-report.md),
 [release-delrapport](001-version-bound-direct-api-flow-phase-3-release-report.md)
 och [Fas 3b1](001-version-bound-direct-api-flow-phase-3b1-report.md) bevaras
 som historiska observationer.
 
-Nästa enda steg är att granska och avgränsa **Fas 4 – kontrakts- och
-dependencyfel** mot den verifierade harnessen. Fas 4–7 är inte påbörjade;
-hela Experiment 001 är inte klassificerat. Detta statusavsnitt ändrar inte
-fasernas ursprungliga orakel eller innebär ett produktionsbeslut.
+Nästa enda steg är att granska och avgränsa **Fas 5** mot det verifierade
+Fas 1–4-underlaget. Fas 5–7 är inte påbörjade; hela Experiment 001 är fortsatt
+`not-classified`. Statusuppdateringen ändrar inte fasernas ursprungliga orakel
+eller innebär ett produktionsbeslut.

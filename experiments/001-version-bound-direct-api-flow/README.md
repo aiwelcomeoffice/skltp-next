@@ -1,16 +1,25 @@
-# Experiment 001 – Fas 1–3
+# Experiment 001 – Fas 1–4
 
-Status: `experimental`. Fas 1–3 är implementerade och verifierade inom den lokala modellen; den sammanhållna
-[Fas 3-rapporten](../../docs/experiments/001-version-bound-direct-api-flow-phase-3-report.md)
-redovisar slutlig verifiering, avvikelser och begränsningar.
+Status: `experimental`. Fas 1–4 är implementerade och verifierade inom den lokala modellen.
+[Fas 4-rapporten](../../docs/experiments/001-version-bound-direct-api-flow-phase-4-report.md)
+redovisar slutverifieringen på commit `f613ac2`, resultat och begränsningar.
 Historiken finns i [Fas 1](../../docs/experiments/001-version-bound-direct-api-flow-phase-1-report.md),
 [Fas 2](../../docs/experiments/001-version-bound-direct-api-flow-phase-2-report.md),
-[Fas 3 release](../../docs/experiments/001-version-bound-direct-api-flow-phase-3-release-report.md)
-och [Fas 3b1](../../docs/experiments/001-version-bound-direct-api-flow-phase-3b1-report.md).
+[Fas 3 release](../../docs/experiments/001-version-bound-direct-api-flow-phase-3-release-report.md),
+[Fas 3b1](../../docs/experiments/001-version-bound-direct-api-flow-phase-3b1-report.md)
+och [hela Fas 3](../../docs/experiments/001-version-bound-direct-api-flow-phase-3-report.md).
 
-Modulen är en syntetisk lokal experimentharness med 55 kombinationer:
-4 i Fas 1, 16 i Fas 2 och 35 i Fas 3. Hela Experiment 001 är inte klassificerat.
-Fas 4–7 är inte påbörjade.
+Modulen är en syntetisk lokal experimentharness med 64 kombinationer:
+4 i Fas 1, 16 i Fas 2, 35 i Fas 3 och 9 i Fas 4. Hela Experiment 001 är inte klassificerat.
+Fas 5–7 är inte påbörjade.
+
+| Fas 4-scenario | Antal varianter | Omfattning |
+|---|---:|---|
+| `E001-CON-002` | 5 | Fel kontraktsversion, invalid request/response, odokumenterat fel och intern Problem Details-detalj |
+| `E001-DEP-001` | 4 | Token/producent: slow respektive unavailable |
+
+Exakta Fas 4-orakel finns i
+[scenarioförteckningen](src/main/resources/experiment-001/scenarios/catalog-phase-4-1.0.0.json).
 
 | Fas 3-scenario | Antal varianter | Omfattning |
 |---|---:|---|
@@ -60,8 +69,8 @@ Det kanoniska bygg- och testkommandot är:
 ```
 
 Det kör Enforcer, enhets-, tool-conformance-, kontrakts-, HTTPS-trust- och
-Fas 1–3-integrationstester och skapar `target/experiment-001-cli.jar`.
-Fas 3-integrationstestet kör alla 55 implementerade kombinationer och validerar ett
+Fas 1–4-integrationstester och skapar `target/experiment-001-cli.jar`.
+Fas 4-integrationstestet kör alla 64 implementerade kombinationer och validerar ett
 komplett evidenspaket.
 
 Verifiera därefter runtime, plattform, wrapperkonfiguration, källträd och
@@ -74,7 +83,7 @@ loopback:
 ## Förbered och validera fixtures
 
 ```bash
-export RUN_ID=phase3-verification
+export RUN_ID=phase4-verification
 "$EXP001_JAVA_HOME/bin/java" -jar target/experiment-001-cli.jar prepare-fixtures \
   --run-id "$RUN_ID" --release 1.0.0 --parameters 1.0.0
 "$EXP001_JAVA_HOME/bin/java" -jar target/experiment-001-cli.jar validate \
@@ -107,7 +116,7 @@ done
   --run-id "$RUN_ID"
 ```
 
-## Kör hela Fas 1–3
+## Kör hela Fas 1–4
 
 Varje scenario återställer metadata, familje-/aktörscache, logisk klocka,
 replaystate och policy samt tidigare evidens för just den kombinationen.
@@ -115,10 +124,10 @@ Båda producentrevisionerna förblir separata lyssnare. Kör sekventiellt:
 
 ```bash
 "$EXP001_JAVA_HOME/bin/java" -jar target/experiment-001-cli.jar run-suite \
-  --run-id "$RUN_ID" --through-phase 3
+  --run-id "$RUN_ID" --through-phase 4
 ```
 
-Kommandot kör exakt 55 kombinationer och avslutas med exit 0 endast om alla
+Kommandot kör exakt 64 kombinationer och avslutas med exit 0 endast om alla
 fick `pass`. En enskild variant kan köras med:
 
 ```bash
@@ -128,8 +137,10 @@ fick `pass`. En enskild variant kan köras med:
 
 Den pinnade producenttimeouten är 300 ms. En belastad host kan därför ge ett
 explicit `inconclusive` trots ett sent, korrekt svar. Ändra inte timeouten
-eller oraklet; verifiera hostläget och kör om just den isolerade varianten.
-Samla bara slutlig evidens när samtliga 55 resultat är `pass`.
+eller oraklet. Bevara först den felande körningens tillgängliga evidens
+separat och verifiera hostläget innan en ny körning. Samla även underlag för
+`fail` och `inconclusive`; endast ett komplett, godkänt paket med samtliga
+64 resultat `pass` stöder statusen Fas 1–4 verifierade.
 
 ## Samla och validera evidens
 
@@ -143,15 +154,26 @@ Samla och validera innan privat runtime-state tas bort:
 ```
 
 Det schema-validerade och läckageskannade paketet skapas i
-`target/experiment-001/evidence/$RUN_ID/`. Manifestet omfattar de 55 implementerade kombinationerna,
+`target/experiment-001/evidence/$RUN_ID/`. Manifestet omfattar de 64 implementerade kombinationerna,
 alla resultat, checkpoint-evidens, extern felklassificering, direktflödesledger
 och en tom säker harness-felkanal. `validate-evidence` verifierar manifest,
 filchecksummer, läckageskanning och payload-call ledger. Fas 3 har separata
 schema-validerade metadata-, discovery-, transition- och audithändelser samt
 ett oberoende observationsorakel över de exporterade filerna. Det kontrollerar
 också anropsordning, terminal checkpoint, cachegränser och saknad evidens.
-`classification.json` skiljer `phaseThreeResult: verified` från
+`classification.json` skiljer `phaseFourResult: verified` från
 `experiment001: not-classified`.
+
+Fas 4 har också schema-validerade observationer i `phase-4/observations.jsonl`
+och ett oberoende orakel i `validation/phase-4.json`. Det jämför kontraktsresultat,
+terminal checkpoint, klientförsök, mottagare, dependencyklass och sena avslut.
+Varje HTTP-beroende har 300 ms timeout, högst ett försök och 350 ms budget.
+Slow-testdubbeln fördröjer svaret 600 ms; unavailable ger en syntetisk 503.
+Efter timeout är resultatfilen finaliserad innan `__drain` inväntar servern.
+Checksumman måste förbli oförändrad, och reset dränerar handlers före nästa scenario.
+Ett enda sidoeffektsfritt producentanrop kan ha utförts före timeouten.
+Klassificeringen gäller Fas 4 i den lokala modellen; hela Experiment 001 förblir
+`not-classified`. `run-suite --through-phase 3` finns kvar för enbart de 55 tidigare kombinationerna.
 
 Metadataålder (`ageMillis`) räknas från signerad `issuedAt`; cacheålder
 (`cacheAgeMillis`) från `fetchedAt`. Återhämtning av samma gamla revision
