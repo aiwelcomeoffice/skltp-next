@@ -1,0 +1,133 @@
+{
+  "basis": "Implementation plan sections 9 phase 6 and 10; specification section 1",
+  "captureComparison": "channel/exported/hitCount/fieldClasses; private representation counts and digests validated per run",
+  "checks": {
+    "allRunControlsPass": true,
+    "distinctRuns": true,
+    "freshPublicFingerprints": true,
+    "sameSource": true,
+    "sequential": true,
+    "stableEvidenceEqual": true
+  },
+  "comparedFiles": 239,
+  "eventOrdering": "JSONL multiset; within-run causal ordering validated by original oracles",
+  "experiment001": "styrkt",
+  "freshFingerprints": {
+    "jwk-fingerprints.json": true,
+    "metadata-authority-fingerprints.json": true,
+    "tls-fingerprints.json": true
+  },
+  "limitation": "Local synthetic harness; offline comparison relies on recorded full validation before private-state removal. Failed controls require review, never automatic falsification.",
+  "runs": [
+    {
+      "channelHits": 0,
+      "channelObservations": 171,
+      "checks": {
+        "allResultsPass": true,
+        "canaryCoverageAndNoHits": true,
+        "cleanSource": true,
+        "completeCore": true,
+        "freshState": true,
+        "fullValidationBeforeStop": true,
+        "packageHashesAndInventory": true,
+        "packagePass": true,
+        "phaseFiveOracle": true,
+        "phaseFourOracle": true,
+        "phaseThreeOracle": true,
+        "sameRecordedSource": true,
+        "stoppedAndPrivateRemoved": true,
+        "suitePassed": true,
+        "toolGatesPass": true,
+        "verificationSuite": true
+      },
+      "leakage": {
+        "canaryClasses": [
+          "access_token",
+          "api_payload",
+          "client_assertion",
+          "dpop_proof",
+          "private_key",
+          "sensitive_claim"
+        ],
+        "hitCount": 0,
+        "schemaVersion": "1.0.0",
+        "status": "pass"
+      },
+      "manifestEntries": 272,
+      "manifestSha256": "9cf6f2832a966da9d89a813cdad7a0f8f586e28077f6fa10ddeb45c7ce573e56",
+      "results": 66,
+      "runId": "phase6-core-a-20260910",
+      "runRecordSha256": "1399d828c563a94314fd0b4217c1a1167ea7faf1259e8d5eadfda5c41e950547",
+      "sha256sumsSha256": "e4c2803b6f6b4fc028c319a3660431200c82daf2f751b12ff734d0411000f9fb",
+      "sourceCommit": "647d5c06448e0d50ae337c1ad7476aa665cecdfc",
+      "stimuli": 9
+    },
+    {
+      "channelHits": 0,
+      "channelObservations": 171,
+      "checks": {
+        "allResultsPass": true,
+        "canaryCoverageAndNoHits": true,
+        "cleanSource": true,
+        "completeCore": true,
+        "freshState": true,
+        "fullValidationBeforeStop": true,
+        "packageHashesAndInventory": true,
+        "packagePass": true,
+        "phaseFiveOracle": true,
+        "phaseFourOracle": true,
+        "phaseThreeOracle": true,
+        "sameRecordedSource": true,
+        "stoppedAndPrivateRemoved": true,
+        "suitePassed": true,
+        "toolGatesPass": true,
+        "verificationSuite": true
+      },
+      "leakage": {
+        "canaryClasses": [
+          "access_token",
+          "api_payload",
+          "client_assertion",
+          "dpop_proof",
+          "private_key",
+          "sensitive_claim"
+        ],
+        "hitCount": 0,
+        "schemaVersion": "1.0.0",
+        "status": "pass"
+      },
+      "manifestEntries": 272,
+      "manifestSha256": "56eb629e97f20cc400e42c1990a8133874d3166fb6c5bc7f63fda3311da5797b",
+      "results": 66,
+      "runId": "phase6-core-b-20260910",
+      "runRecordSha256": "427fd20495d944cc54640b7d04b4133f8409ec89ea0988f9f704a7c156456a4a",
+      "sha256sumsSha256": "a0c910ed041654d0311be065f6336ccbc0c10bdf7531d6df47e02ede8d98f3f5",
+      "sourceCommit": "647d5c06448e0d50ae337c1ad7476aa665cecdfc",
+      "stimuli": 9
+    }
+  ],
+  "scope": "Experiment 001 core",
+  "semanticDifferences": [],
+  "variableFields": [
+    "activatedAt",
+    "afterSha256",
+    "atEpochMillis",
+    "auditRecordId",
+    "auditRef",
+    "beforeSha256",
+    "decisionRef",
+    "durationBucket",
+    "durationMillis",
+    "fetchedAt",
+    "hostLoadAverage",
+    "observedAt",
+    "parentSpanId",
+    "recordedAt",
+    "runId",
+    "scenarioDurationMillis",
+    "spanId",
+    "stimulusRef",
+    "tokenAgeSeconds",
+    "traceId"
+  ]
+}

@@ -1,8 +1,8 @@
 # Experiment 001 – Versionsbundet direkt M2M-API-flöde
 
 - **Status:** experimental
-- **Senast sakgranskad:** 2026-08-22; implementationsstatus uppdaterad 2026-09-08
-- **Implementation:** Fas 1 verifierad 2026-08-18, Fas 2 verifierad 2026-08-22, Fas 3 verifierad 2026-09-07 Fas 4 verifierad 2026-09-08 och Fas 5 verifierad 2026-09-08; Fas 6–7 inte påbörjade
+- **Senast sakgranskad:** 2026-08-22; implementationsstatus uppdaterad 2026-09-10
+- **Implementation:** Fas 1 verifierad 2026-08-18, Fas 2 verifierad 2026-08-22, Fas 3 verifierad 2026-09-07 Fas 4 verifierad 2026-09-08 och Fas 5 verifierad 2026-09-08; Fas 6 core closeout verifierad 2026-09-10, core `styrkt`; Fas 7 inte påbörjad
 - **Dokumenttyp:** produkt- och implementationsneutral experimentspecifikation
 - **Styrande underlag:** [Syntes 001](../architecture/001-research-synthesis-and-first-experiment-hypothesis.md)
 
@@ -21,7 +21,8 @@ Implementationsstatusen ovan ändrar inte de normativa scenariodefinitionerna.
 Verifieringsresultaten finns i [Fas 1-rapporten](001-version-bound-direct-api-flow-phase-1-report.md)
 [Fas 2-rapporten](001-version-bound-direct-api-flow-phase-2-report.md)
 och [Fas 3-rapporten](001-version-bound-direct-api-flow-phase-3-report.md);
-hela Experiment 001 är ännu inte klassificerat.
+den samlade core-klassificeringen är nu `styrkt` enligt
+[Fas 6-rapporten](001-version-bound-direct-api-flow-phase-6-report.md).
 
 ## Läsregel för källstatus och kravord
 
@@ -794,10 +795,9 @@ Följande ska fortfarande hållas öppna efter denna specifikation:
 
 ### Rekommenderad nästa enda arbetsuppgift
 
-[Implementationsplanens](001-version-bound-direct-api-flow-implementation-plan.md)
-Fas 1–5 är verifierade. Se [Fas 5-rapporten](001-version-bound-direct-api-flow-phase-5-report.md)
-för 66/66 kombinationer, oberoende OBS-evidens, noll läckageträffar och lokala
-begränsningar. Nästa enda steg är **Fas 6 core closeout**, avgränsat i
-[CURRENT-WORK.md](../../CURRENT-WORK.md): två rena sekventiella core-körningar,
-jämförelse av stabila resultat och slutklassificering. Fas 6–7 är inte påbörjade
-och hela Experiment 001 är fortsatt `not-classified`.
+Fas 6 core closeout är verifierad 2026-09-10. Experiment 001 är **`styrkt`
+inom core-scope** efter två rena oberoende körningar; se
+[Fas 6-rapporten](001-version-bound-direct-api-flow-phase-6-report.md) för
+full evidens, klassificering och begränsningar. Normativa kriterier ovan är
+oförändrade. Nästa enda föreslagna slice är Fas 7:s `E001-AUTHN-001`, avgränsad i
+[CURRENT-WORK.md](../../CURRENT-WORK.md). Extended är inte verifierat.

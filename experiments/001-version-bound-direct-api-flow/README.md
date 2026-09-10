@@ -1,4 +1,4 @@
-# Experiment 001 – Fas 1–5
+# Experiment 001 – verifierad core och Fas 6 closeout
 
 Status: `experimental`. Fas 1–5 är implementerade och verifierade inom den lokala modellen.
 [Fas 5-rapporten](../../docs/experiments/001-version-bound-direct-api-flow-phase-5-report.md)
@@ -13,7 +13,9 @@ och [hela Fas 3](../../docs/experiments/001-version-bound-direct-api-flow-phase-
 
 Modulen är en syntetisk lokal experimentharness med 66 kombinationer:
 4 i Fas 1, 16 i Fas 2, 35 i Fas 3, 9 i Fas 4 och 2 i Fas 5.
-Hela Experiment 001 är inte klassificerat. Fas 6–7 är inte påbörjade.
+Experiment 001 är **`styrkt` inom core-scope** efter två rena oberoende körningar.
+Se [Fas 6-rapporten](../../docs/experiments/001-version-bound-direct-api-flow-phase-6-report.md).
+Fas 7 extended är inte påbörjad.
 
 Fas 5 omfattar endast `E001-OBS-001/baseline` (fem självständiga stimuli)
 och `E001-OBS-002/baseline` (fyra självständiga stimuli). De två tillåtna
@@ -180,8 +182,8 @@ Slow-testdubbeln fördröjer svaret 600 ms; unavailable ger en syntetisk 503.
 Efter timeout är resultatfilen finaliserad innan `__drain` inväntar servern.
 Checksumman måste förbli oförändrad, och reset dränerar handlers före nästa scenario.
 Ett enda sidoeffektsfritt producentanrop kan ha utförts före timeouten.
-Klassificeringen gäller Fas 4 i den lokala modellen; hela Experiment 001 förblir
-`not-classified`. `run-suite --through-phase 3` finns kvar för enbart de 55 tidigare kombinationerna.
+Den inbyggda klassificeringen gäller Fas 4 i den lokala modellen; dess
+`not-classified` ersätter inte Fas 6:s separata tvåkörningsbedömning. `run-suite --through-phase 3` finns kvar för enbart de 55 tidigare kombinationerna.
 
 Fas 5 återställer samma fixtures mellan varje stimulus och isolerar dess
 kanaler från tidigare scenarioresultat. `phase-5/<OBS-id>/<index>/capture.json`
@@ -208,8 +210,10 @@ träffuppgifter/digests exporteras. Saknad täckning eller ogiltig evidens ger
 `inconclusive`. Full omskanning kräver de privata per-stimulusregistren före stop.
 
 `run-suite --through-phase 4` finns kvar för exakt Fas 1–4:s 64 kombinationer.
-Fas 6 ska införa core-closeout och jämföra två rena körningar; `--class core`
-är ännu inte implementerat.
+Fas 6 återanvänder `--through-phase 5` för exakt core-mängd och jämför två rena
+körningar med verktygen nedan. `--class core` är inte implementerat; ingen
+experimentkod ändrades för closeout. Enskilda pakets `not-classified` bevaras,
+och den samlade core-klassificeringen ligger utanför deras manifest.
 
 Metadataålder (`ageMillis`) räknas från signerad `issuedAt`; cacheålder
 (`cacheAgeMillis`) från `fetchedAt`. Återhämtning av samma gamla revision
@@ -240,3 +244,61 @@ bort hela modulens genererade `target/`:
 ```bash
 ./mvnw -B -ntp clean
 ```
+
+## Reproducera core closeout
+
+Dessa kommandon körs **från reporoten**. Python 3.10+ krävs för de fristående
+closeout-verktygen; inga Python-beroenden behöver installeras. Varje körning
+kräver en ny, ren checkout utan `target/` och en ny extern outputkatalog.
+Verktyget bygger och kör hela CLI-livscykeln, bevarar även negativa utfall och
+validerar före stop. Privat state kopieras aldrig. Serverprocessens avslut
+hämtas mellan de två stop-kontrollerna.
+
+Reproducera den rapporterade källrevisionen med samma pinnade JDK:
+
+```bash
+export JAVA_HOME="$EXP001_JAVA_HOME"
+export EXP001_CLOSEOUT_ROOT="$(mktemp -d /tmp/e001-core-closeout.XXXXXX)"
+git clone --no-hardlinks "$PWD" "$EXP001_CLOSEOUT_ROOT/run-a"
+git -C "$EXP001_CLOSEOUT_ROOT/run-a" checkout --detach 647d5c06448e0d50ae337c1ad7476aa665cecdfc
+python3 experiments/001-version-bound-direct-api-flow/tools/core-closeout-run.py \
+  "$EXP001_CLOSEOUT_ROOT/run-a" "$EXP001_CLOSEOUT_ROOT/evidence-a" core-a
+
+git clone --no-hardlinks "$PWD" "$EXP001_CLOSEOUT_ROOT/run-b"
+git -C "$EXP001_CLOSEOUT_ROOT/run-b" checkout --detach 647d5c06448e0d50ae337c1ad7476aa665cecdfc
+python3 experiments/001-version-bound-direct-api-flow/tools/core-closeout-run.py \
+  "$EXP001_CLOSEOUT_ROOT/run-b" "$EXP001_CLOSEOUT_ROOT/evidence-b" core-b
+
+python3 experiments/001-version-bound-direct-api-flow/tools/core-closeout-compare.py \
+  "$EXP001_CLOSEOUT_ROOT/evidence-a" "$EXP001_CLOSEOUT_ROOT/evidence-b" \
+  "$EXP001_CLOSEOUT_ROOT/comparison"
+python3 experiments/001-version-bound-direct-api-flow/tools/test-core-closeout.py \
+  "$EXP001_CLOSEOUT_ROOT/evidence-a" "$EXP001_CLOSEOUT_ROOT/evidence-b"
+```
+
+Jämförelsen hämtar den obligatoriska variantmängden med `git show` från paketets
+källrevision; denna commit måste därför finnas i det repo där kommandot körs.
+Den verifierar paketens bytes igen och jämför stabila observationer. Exit 0
+betyder `styrkt` enligt det positiva core-villkoret; avvikelse ger `inkonklusiv`
+med exit 2, eller non-zero utan klassificering om nödvändiga filer inte går att
+läsa. `falsifierad` kräver separat granskning av giltig, upprepad falsifiering
+mot originalkriterierna. Körningsskriptets process-exit ersätter inte granskning
+av `run-record.json`, svitresultat och den samlade jämförelsen.
+
+För offline-granskning av de bevarade körningarna, också från reporoten:
+
+```bash
+(cd docs/experiments/evidence/001-phase-6 && sha256sum -c SHA256SUMS)
+export EXP001_REVIEW_ROOT="$(mktemp -d /tmp/e001-core-review.XXXXXX)"
+tar -xzf docs/experiments/evidence/001-phase-6/core-closeout-evidence.tar.gz \
+  -C "$EXP001_REVIEW_ROOT"
+(cd "$EXP001_REVIEW_ROOT/core-closeout" && sha256sum -c SHA256SUMS)
+python3 experiments/001-version-bound-direct-api-flow/tools/core-closeout-compare.py \
+  "$EXP001_REVIEW_ROOT/core-closeout/run-a" "$EXP001_REVIEW_ROOT/core-closeout/run-b" \
+  "$EXP001_REVIEW_ROOT/recomputed"
+```
+
+Arkivet innehåller bygg-/CLI-loggar och Surefire-rapporter samt paketens alla
+manifestposter. Den privata canaryskanningen kan inte upprepas offline efter
+cleanup; dess fulla validering före stop är registrerad per körning. Ett nytt
+end-to-end-bevis kräver därför nya rena körningar enligt ovan.

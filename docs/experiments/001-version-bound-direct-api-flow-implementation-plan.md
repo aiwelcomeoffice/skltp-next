@@ -3,7 +3,7 @@
 - **Status:** experimental
 - **Datum:** 2026-08-17
 - **Senast uppdaterad:** 2026-09-08
-- **Implementation:** Fas 1 verifierad 2026-08-18; Fas 2 verifierad 2026-08-22; Fas 3 verifierad 2026-09-07 (se [slutrapport](001-version-bound-direct-api-flow-phase-3-report.md)); Fas 4 verifierad 2026-09-08 (se [slutrapport](001-version-bound-direct-api-flow-phase-4-report.md)); Fas 5 verifierad 2026-09-08 (se [rapport](001-version-bound-direct-api-flow-phase-5-report.md)); Fas 6–7 inte påbörjade
+- **Implementation:** Fas 1 verifierad 2026-08-18; Fas 2 verifierad 2026-08-22; Fas 3 verifierad 2026-09-07 (se [slutrapport](001-version-bound-direct-api-flow-phase-3-report.md)); Fas 4 verifierad 2026-09-08 (se [slutrapport](001-version-bound-direct-api-flow-phase-4-report.md)); Fas 5 verifierad 2026-09-08 (se [rapport](001-version-bound-direct-api-flow-phase-5-report.md)); Fas 6 core closeout verifierad 2026-09-10 (se [rapport](001-version-bound-direct-api-flow-phase-6-report.md)), core `styrkt`; Fas 7 inte påbörjad
 - **Planerar:** [Experiment Specification 001](001-version-bound-direct-api-flow.md)
 - **Styrande syntes:** [Syntes 001](../architecture/001-research-synthesis-and-first-experiment-hypothesis.md)
 - **Beslutsräckvidd:** endast den syntetiska experimentharnessen
@@ -718,7 +718,8 @@ Fas 5 är implementerad och verifierad 2026-09-08: två nya kombinationer,
 nio självständiga stimulusmaterialiseringar och 171 kanalobservationer.
 66/66 kombinationer och 53 tester passerade; full CLI-livscykel och oberoende
 paketvalidering är godkända. Se [Fas 5-rapporten](001-version-bound-direct-api-flow-phase-5-report.md).
-Slutkörningen är en verifierad arbetskopia; hela experimentet är inte klassificerat.
+Fas 5-slutkörningen var en verifierad arbetskopia och klassificerade inte hela
+experimentet. Den efterföljande core-klassificeringen finns i Fas 6-rapporten.
 
 ### Fas 6 – core closeout
 
@@ -726,6 +727,12 @@ Kör `run-suite --class core` i minst två rena, sekventiella körningar med
 nygenererade nycklar och olika run-id. Validera identiskt scenarioresultat
 och stabila kategorier trots olika kryptografiska bytes. Samla komplett
 evidence package och klassificera hypotesen. Detta tillför inget scenario.
+
+**Genomfört 2026-09-10:** två rena körningar med 66/66 pass vardera, godkända
+paket och lika stabila resultat; core `styrkt`. Befintligt `--through-phase 5`
+återanvändes för exakt core-mängd i stället för att ändra CLI-koden för aliaset.
+Se [Fas 6-rapporten](001-version-bound-direct-api-flow-phase-6-report.md) för
+proveniens, avvikelse, maskinell jämförelse och begränsningar.
 
 ### Fas 7 – extended, efter core
 
@@ -980,16 +987,14 @@ Alla externa källor nedan lästes 2026-08-17. Lokala researchdokument
 
 ## Implementationsstatus och nästa enda steg
 
-Fas 1–5 är verifierade inom den lokala syntetiska harnessen. Fas 5-körningen
-`phase5-final-20260908` gav 66/66 kombinationer och ett komplett,
-oberoende validerat evidenspaket; 53 tester passerade i kanonisk `clean verify`.
-Se [Fas 5-rapporten](001-version-bound-direct-api-flow-phase-5-report.md) för
-arbetskopians källbas/digest, OBS-stimuli, kategoriseparation och begränsningar.
-Tidigare fasrapporter bevaras som historiska observationer.
+Fas 1–6 är verifierade inom den lokala syntetiska harnessen. Experiment 001:s
+core är avslutat och klassificerat **`styrkt`** efter två rena oberoende körningar
+på `647d5c0`: 66/66 pass och 53 godkända tester vardera, full validering före stop
+samt konsistenta stabila observationer. Se
+[Fas 6-rapporten](001-version-bound-direct-api-flow-phase-6-report.md) och dess
+bevarade evidenspaket. Tidigare fasrapporter bevaras som historiska observationer.
 
-Nästa enda steg är **Fas 6 core closeout**, avgränsat i
-[CURRENT-WORK.md](../../CURRENT-WORK.md): två rena sekventiella körningar,
-stabila resultat trots nya kryptografiska bytes och slutklassificering.
-Fas 6–7 är inte påbörjade; hela Experiment 001 är fortsatt `not-classified`.
-Statusuppdateringen ändrar inte fasernas ursprungliga orakel eller innebär ett
-produktionsbeslut.
+Nästa enda föreslagna slice är **Fas 7:s `E001-AUTHN-001`**, avgränsad i
+[CURRENT-WORK.md](../../CURRENT-WORK.md). Extended är inte verifierat och krävs
+inte för core-exit. Statusuppdateringen ändrar inte ursprungliga orakel och
+innebär inget produktionsbeslut.

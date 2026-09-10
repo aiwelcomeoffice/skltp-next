@@ -29,27 +29,28 @@ inte **långlivade arkitekturbeslut**; sådana dokumenteras i accepterade ADR:er
 | 3 | `verified` | 35 nya kombinationer: releasefel, endpointbyte, discoveryfel, separata metadatafamiljer/cacher, integritet, IAM-relationer, staleness, revokering och offboarding. [Slutrapport](docs/experiments/001-version-bound-direct-api-flow-phase-3-report.md), [release-delrapport](docs/experiments/001-version-bound-direct-api-flow-phase-3-release-report.md), [Fas 3b1](docs/experiments/001-version-bound-direct-api-flow-phase-3b1-report.md). |
 | 4 | `verified` | 9 nya kombinationer: kontraktsavvikelser och token-/producentfel. Inga retries; sena svar ändrar inte finaliserat resultat; positivt flöde efter varje negativ variant. [Slutrapport](docs/experiments/001-version-bound-direct-api-flow-phase-4-report.md). |
 | 5 | `verified` | 2 nya kombinationer, nio självständiga stimuli och 171 kanalobservationer: läckagekontroll samt fyra separata beslutskategorier, audit-/tracereferenser och oberoende evidensvalidering. [Rapport](docs/experiments/001-version-bound-direct-api-flow-phase-5-report.md). |
-| 6 | `not started` | Core closeout och slutklassificering. |
+| 6 | `verified` | Två rena oberoende körningar på `647d5c0`: 66/66 pass och 53 gröna tester vardera, 171 OBS-kanalobservationer och 0 canaryträffar per körning. 239 jämförda filer utan stabila skillnader. **Core `styrkt`, closeout avslutad.** [Rapport](docs/experiments/001-version-bound-direct-api-flow-phase-6-report.md). |
 | 7 | `not started` | Extended efter core closeout. |
 
-Senaste Fas 5-omverifiering: `phase5-revalidation-20260910`, källbas
-`c99f02cb5f233a185355304764fcb0daef47b168` med endast rättad körbar filflagga
-för `mvnw` (`phase-5-working-tree`). Experimentimplementationen var redan
-komplett; ny Linux-checkout avslöjade att wrappern inte var körbar i Git.
-Tidigare evidens bevaras i
-[rapporten, med ny verifiering](docs/experiments/001-version-bound-direct-api-flow-phase-5-report.md#omverifiering-från-repositoryts-state-2026-09-10).
-**66/66** kombinationer (`4 + 16 + 35 + 9 + 2`), **53 tester** utan fel,
-full CLI-livscykel och godkänt evidenspaket; sex canaryklasser, noll träffar.
-Inga slutliga `fail` eller `inconclusive`. Hela Experiment 001 är fortfarande
-**`not-classified`**; Fas 6:s två rena körningar återstår.
-Det råa paketet ligger under ignorerad `target/` enligt rapporten och ingår
-inte i en vanlig checkout; [modulens README](experiments/001-version-bound-direct-api-flow/README.md)
-anger reproduktionskommandon. Privat state är borttaget efter full validering.
+Senaste verifiering: **Fas 6 core closeout 2026-09-10**, run-id
+`phase6-core-a-20260910` och `phase6-core-b-20260910`. Båda manifesten anger
+`clean` på `647d5c06448e0d50ae337c1ad7476aa665cecdfc`; nya nycklar och separata
+checkouter/processer, full validering före stop och borttaget privat state.
+Experiment 001:s slutklassificering är **`styrkt` inom core-scope** enligt
+befintliga kriterier. Extended är inte verifierat och krävs inte för core-exit.
+[Maskinell jämförelse](docs/experiments/evidence/001-phase-6/comparison.json) och
+[båda fulla evidenspaketen med körningsprotokoll](docs/experiments/evidence/001-phase-6/core-closeout-evidence.tar.gz)
+är bevarade i repot. Paketens äldre `not-classified` avser respektive Fas 1–5-run;
+Fas 6-rapporten och jämförelsen innehåller den samlade klassificeringen.
+Experimentkod, orakel, parametrar och beroenden är oförändrade.
 
 ## Begränsningar och öppna frågor
 
-- Full core closeout och extended är inte verifierade. OBS använder endast de
-  två tillåtna AUTHN-/DPoP-stimulusbyggarna; fulla extended-scenarier är inte körda.
+- Core är avslutat; fulla extended-scenarier är inte körda. OBS använder endast
+  de två tillåtna AUTHN-/DPoP-stimulusbyggarna.
+- Run A:s omedelbara andra stopp gav exit 70 före processhämtning; efterföljande
+  kontroll och båda stoppen i B passerade. Evidens och privat cleanup var redan
+  klara. Se Fas 6-rapporten för exakt räckvidd; ingen CLI-fix infördes.
 - Lokal JVM, loopback, testdubblar och kontrollerad metadata visar inte
   process-/maskinisolering, distribuerad konsistens, extern IdP/katalog eller
   produktions-PKI, skalbarhet och driftsäkerhet. Fas 4:s unavailable är 503;
@@ -64,10 +65,8 @@ anger reproduktionskommandon. Privat state är borttaget efter full validering.
 
 ## Exakt nästa arbete
 
-**Experiment 001 – Fas 6: core closeout**, avgränsat i
-[CURRENT-WORK.md](CURRENT-WORK.md). Koppla `run-suite --class core` till de
-befintliga 66 kombinationerna, genomför två rena sekventiella körningar med
-olika run-id och nya nycklar, jämför resultat/kategorier och klassificera hela
-experimentet först när båda evidenspaketen är validerade. Inga nya scenarier
-eller full extended-implementation. Fasordning och exitvillkor finns i
-[implementationsplanens avsnitt 9–10](docs/experiments/001-version-bound-direct-api-flow-implementation-plan.md#9-fasindelad-implementationsordning).
+**Fas 7:s `E001-AUTHN-001`**, som en avgränsad extended-slice med de nio redan
+specificerade assertionvarianterna. Endast föreslaget; inte implementerat.
+[CURRENT-WORK.md](CURRENT-WORK.md) anger frågan och gränserna. Inget ytterligare
+arbete återstår för core closeout; detta nästa experiment ändrar inte den
+avslutade körningens evidens eller gör resultatet till ett arkitekturbeslut.
