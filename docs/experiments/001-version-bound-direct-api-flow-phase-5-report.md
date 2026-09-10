@@ -2,6 +2,7 @@
 
 - **Status:** `experimental`; Fas 5 `verified`.
 - **Verifierad:** 2026-09-08.
+- **Omverifierad:** 2026-09-10; se kompletteringen nedan.
 - **Kunskapsklass:** verifierad experimentell evidens i lokal syntetisk harness.
 - **Scope:** endast `E001-OBS-001/baseline` och `E001-OBS-002/baseline`.
 
@@ -161,3 +162,68 @@ Fas 6 core closeout enligt [aktuell slice](../../CURRENT-WORK.md): koppla
 sekventiella run-id:n med nygenererade nycklar, jämför resultat och kategorier,
 validera båda paketen och dokumentera hela experimentets slutklassificering.
 Inga nya scenarier eller full extended-implementation ingår i nästa slice.
+
+## Omverifiering från repositoryts state 2026-09-10
+
+**Observerat:** arbetskopian var ren på
+`c99f02cb5f233a185355304764fcb0daef47b168` (`added-most-of-fas5`). Trots
+commitnamnet innehöll revisionen redan slutimplementationen, de 53 testerna
+och ovanstående rapport. Samtliga 125 byggunderlagsfiler stämde byteexakt med
+den tidigare checksummeförteckningen. Det bevarade paketets manifest och
+`SHA256SUMS` stämde också med rapportens hashvärden. Ingen saknad
+Fas 5-funktion eller nytt testbehov identifierades.
+
+En reproducerbarhetslucka upptäcktes i en ny Linux-checkout: `mvnw` hade
+Git-filmode `100644`, så det kanoniska `./mvnw -B -ntp clean verify` avslutades
+med exit 126, `Permission denied`. **Ändring:** endast filmode till `100755`;
+wrapperns innehåll, experimentkod, beroenden, kontrakt och orakel är oförändrade.
+Windows-mountens lokala rättigheter hade dolt felet. Filmodeändringen ligger i
+Git-index eftersom huvudcheckouten använder `core.filemode=false`.
+
+Den nya körningen **`phase5-revalidation-20260910`** gjordes i en separat lokal
+Linux-checkout på WSL2:
+`/tmp/e001-phase5-revalidation-20260910/experiments/001-version-bound-direct-api-flow`.
+Pinnad Temurin `25.0.4+7-LTS` användes; distributionsfilens SHA-256 verifierades
+mot repositoryts befintliga pin. Maven Wrapper och alla tidsgränser behölls.
+Manifestets källrevision är `c99f02cb5f233a185355304764fcb0daef47b168` och
+klassen är korrekt **`phase-5-working-tree`**, eftersom filmode var ändrad.
+Byggunderlagets innehållsdigest är fortsatt
+`de79e5a77c2c2b048f7116132e3fc8c32573892867cd6ebbc8fec61ac08bb331`;
+den digesten omfattar filinnehåll, inte Git-filmode.
+
+| Ny verifiering | Observerat resultat |
+|---|---|
+| `./mvnw -B -ntp clean verify` efter filmoderättningen | **53 tester**, 0 failures/errors/skipped; BUILD SUCCESS |
+| Full dokumenterad CLI-livscykel med nya nycklar | Prerequisites, fixtures, release-/kontrakts-/tool-gates och slutlig readiness godkända |
+| `run-suite --through-phase 5` | **66/66 pass**: 64 tidigare kombinationer och båda OBS-scenarierna |
+| Oberoende OBS-validering | **9 stimuli**, **171 kanalobservationer**, **6 canaryklasser**, **0 träffar** |
+| `collect-evidence` och `validate-evidence` före stop | Båda `pass`; **272 manifestposter**, schema-, referens-, checksumme- och tidigare Fas 3/4-orakel godkända |
+| Stop två gånger | Båda exit 0; privat runtime-state borttagen |
+
+Regressionerna omfattade saknad/ogiltig token, fel issuer/audience,
+authorization deny, inaktivt medlemskap/offboarding, saknad discovery-endpoint,
+endpointbyte/staleness, timeout/503 samt ogiltig request och kontraktsversion.
+OBS-testerna verifierade dessutom separat klientautentisering, tokenvalidering,
+sender constraint och authorization, strukturerade beslutsloggar,
+audit-/spanreferenser och avvisning av muterad eller ofullständig evidens.
+Fulla extended-scenarier för serviceidentitet kördes inte.
+
+Det nya råpaketet finns i modulens ignorerade
+`target/experiment-001/evidence/phase5-revalidation-20260910/`.
+Bygglogg, CLI-skript/-logg, Surefire-rapporter, källchecksummor och maskinell
+sammanställning finns i `target/phase5-revalidation-20260910/`.
+Överförda paketbytes kontrollerades efter kopiering till huvudcheckouten;
+privat runtime-state kopierades inte. Dessa filer ingår inte i en vanlig checkout.
+
+- `manifest.json` SHA-256:
+  `b1da68017d55b00cecf3880bb5dff9e579b9ff37522c39813d4104b23dc26c6b`.
+- `SHA256SUMS` SHA-256:
+  `b1799e0fbd961bf7fc90f6420c331c02bbdbd15cf140a20e52025b725a7192f2`.
+
+**Tolkning/slutsats:** Fas 5 är fortsatt verifierad och kan avslutas inom sitt
+befintliga scope, nu med rättad Linux-körbarhet. Begränsningarna ovan kvarstår;
+experimentet är fortsatt `not-classified`. **SKLTP Next-förslag – enda nästa
+experiment:** den redan avgränsade Fas 6 core closeout, med två rena körningar
+och jämförelse av stabila utfall. Den har inte implementerats här, och denna
+arbetskopiekörning ersätter inte dess exitvillkor. Inget nytt Inera-krav eller
+långlivat arkitekturbeslut har införts. Commit/push lämnas till Disa.

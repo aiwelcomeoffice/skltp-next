@@ -1,6 +1,6 @@
 # SKLTP Next – operativ state
 
-Uppdaterad: 2026-09-08. Experimentstatus: `experimental`.
+Uppdaterad: 2026-09-10. Experimentstatus: `experimental`.
 Kort ingång till kanoniskt underlag; rapporterna bevarar detaljer och historik.
 
 ## Mål och kunskapsstatus
@@ -32,9 +32,12 @@ inte **långlivade arkitekturbeslut**; sådana dokumenteras i accepterade ADR:er
 | 6 | `not started` | Core closeout och slutklassificering. |
 | 7 | `not started` | Extended efter core closeout. |
 
-Avgörande Fas 5-körning: `phase5-final-20260908`, källbas
-`534d1d0ba3dcc7d34ec909fb0e546430d26e1e24` med verifierad arbetskopia
-(`phase-5-working-tree`; byggunderlagets digest finns i rapporten).
+Senaste Fas 5-omverifiering: `phase5-revalidation-20260910`, källbas
+`c99f02cb5f233a185355304764fcb0daef47b168` med endast rättad körbar filflagga
+för `mvnw` (`phase-5-working-tree`). Experimentimplementationen var redan
+komplett; ny Linux-checkout avslöjade att wrappern inte var körbar i Git.
+Tidigare evidens bevaras i
+[rapporten, med ny verifiering](docs/experiments/001-version-bound-direct-api-flow-phase-5-report.md#omverifiering-från-repositoryts-state-2026-09-10).
 **66/66** kombinationer (`4 + 16 + 35 + 9 + 2`), **53 tester** utan fel,
 full CLI-livscykel och godkänt evidenspaket; sex canaryklasser, noll träffar.
 Inga slutliga `fail` eller `inconclusive`. Hela Experiment 001 är fortfarande

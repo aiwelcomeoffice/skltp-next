@@ -1,10 +1,13 @@
 # Experiment 001 – Fas 6: core closeout
 
-Uppdaterad: 2026-09-08. Status: `proposal`; implementation `not started`.
+Uppdaterad: 2026-09-10. Status: `proposal`; implementation `not started`.
 Utgångsläge: [Fas 1–5 verifierade](PROJECT-STATE.md), senast
 [Fas 5-rapporten](docs/experiments/001-version-bound-direct-api-flow-phase-5-report.md).
-Fas 5 omfattar 66/66 kombinationer och 53 gröna tester i en verifierad arbetskopia;
-hela Experiment 001 är fortfarande `not-classified`.
+Fas 5 omverifierades 2026-09-10 på `c99f02c` med endast rättad körbar filflagga
+för `mvnw`: 66/66 kombinationer, 53 gröna tester och full CLI-/paketvalidering.
+Se [omverifieringen](docs/experiments/001-version-bound-direct-api-flow-phase-5-report.md#omverifiering-från-repositoryts-state-2026-09-10).
+Fas 5-slicen är avslutad; denna nästa slice har inte implementerats.
+Hela Experiment 001 är fortfarande `not-classified`.
 
 **Specificerat – Experiment 001:** denna slice följer
 [planens Fas 6 och avsnitt 10](docs/experiments/001-version-bound-direct-api-flow-implementation-plan.md#fas-6--core-closeout)
